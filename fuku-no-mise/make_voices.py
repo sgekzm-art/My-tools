@@ -73,12 +73,15 @@ def out_name(row: dict) -> str:
 
 
 def build_prompt(style: str, text: str) -> str:
-    # 指示文で話し方を決め、セリフ本文は一切変えずに渡す。
+    # 話し方は DIRECTOR'S NOTES、読む文は TRANSCRIPT に分けて渡す。
+    # 日本語の地の文で指示すると、指示文まで読み上げてしまうため。
+    # セリフ本文は一切変えずに渡す。
     return (
-        f"{style}。\n"
-        "次の「」の中のセリフだけを、日本語でそのまま読み上げてください。"
-        "この指示文は読み上げないでください。\n"
-        f"「{text}」"
+        "### DIRECTOR'S NOTES\n"
+        f"Style: {style}\n"
+        "Language: Japanese\n\n"
+        "### TRANSCRIPT\n"
+        f"{text}"
     )
 
 
