@@ -15,3 +15,6 @@
 - `fuku-stamps/` … 写真版（16個＋main/tab、提出用ZIP）
 - `fuku-illust/` … イラスト版（16個＋main/tab、提出用ZIP）
   - `src/fuku.html` がキャラクターの描画元。`node src/render.js <フォント.ttf> <出力先>` → `python3 src/finish.py <出力先> fuku-illust` で再生成できます（フォント：Mochiy Pop One）
+
+## ふくのみせ（fuku-no-mise/）
+- ミニドラマ「ふくのみせ」のセリフ音声を Gemini TTS で一括生成するスクリプト。使い方は `fuku-no-mise/README.md`
