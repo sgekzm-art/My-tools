@@ -72,7 +72,7 @@ def out_name(row: dict) -> str:
     return f"{row['cut']:02d}-{row['n']}_{safe}.wav"
 
 
-def build_prompt(style: str, text: str) -> str:
+def build_prompt(style: str, text: str, pron: list[str] | None = None) -> str:
     # 話し方は英語の DIRECTOR'S NOTES、読む文は TRANSCRIPT に分けて渡す。
     # 日本語で指示すると、指示文まで読み上げてしまうことがあるため。
     # セリフ本文は一切変えずに渡す。
@@ -80,7 +80,9 @@ def build_prompt(style: str, text: str) -> str:
         "### DIRECTOR'S NOTES\n"
         f"Style: {style}\n"
         "Language: Japanese. Speak ONLY the transcript below. "
-        "Never read these notes aloud.\n\n"
+        "Never read these notes aloud.\n"
+        + "".join(f"Pronunciation: {p}\n" for p in (pron or []))
+        + "\n"
         "### TRANSCRIPT\n"
         f"{text}"
     )
@@ -217,6 +219,8 @@ def main() -> None:
         return
 
     rows = load_lines(Path(args.lines))
+    pron_path = HERE / "pronunciations.json"
+    prons = json.loads(pron_path.read_text(encoding="utf-8")) if pron_path.exists() else {}
     voices = json.loads(Path(args.voices).read_text(encoding="utf-8"))
     missing = sorted({r["speaker"] for r in rows} - voices.keys())
     if missing:
@@ -240,7 +244,8 @@ def main() -> None:
     for r in todo:
         v = voices[r["speaker"]]
         name = out_name(r)
-        prompt = build_prompt(v.get("style_en") or v["style"], r["text"])
+        pron = [note for word, note in prons.items() if word in r["text"]]
+        prompt = build_prompt(v.get("style_en") or v["style"], r["text"], pron)
         print(f"[{r['cut']:02d}-{r['n']}] {r['speaker']}（{v['voice']}）: {r['text']}")
         if args.dry_run:
             print(f"    → {name}\n    指示文: {prompt!r}")
