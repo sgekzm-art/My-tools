@@ -22,10 +22,13 @@ python3 make_voices.py                   # まだ作っていない最初の1行
 python3 make_voices.py --all             # 全行を生成（既にあるファイルは飛ばす）
 python3 make_voices.py --all --concat    # 全行生成のあと ffmpeg でカット順に繋いで out/all.wav を作る
 python3 make_voices.py --cut 6 --force   # カット6だけ作り直す
+python3 make_voices.py --all --check     # 生成後に文字起こしで確認し、指示文まで読んでいたら作り直す
 python3 make_voices.py --list-voices     # 使える声の一覧
 python3 make_voices.py --list-models     # 使える TTS モデルの一覧
 ```
 - 既定のモデルは `gemini-3.8-flash-tts`。`--model gemini-3.8-flash-lite-tts` で安い方に切り替えられます。
+- 無料枠は「1モデルにつき1日10回」まで（2026年11月時点）。超えると 429 エラーになり、翌日（太平洋時間の0時）に戻ります。`--check` の確認は別モデルの枠を使います。
+- 話し方の指示は `voices.json` の `style_en`（英語）を使います。日本語の指示だと、指示文まで読み上げてしまうことがあったためです。
 - 失敗した行はエラーを表示して先に進み、最後にまとめて表示します。
 - 声を変えたいときは `voices.json` の `voice` を書き換えて、`--cut <番号> --force` で作り直します。
 

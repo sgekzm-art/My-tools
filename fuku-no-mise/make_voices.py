@@ -73,16 +73,42 @@ def out_name(row: dict) -> str:
 
 
 def build_prompt(style: str, text: str) -> str:
-    # 話し方は DIRECTOR'S NOTES、読む文は TRANSCRIPT に分けて渡す。
-    # 日本語の地の文で指示すると、指示文まで読み上げてしまうため。
+    # 話し方は英語の DIRECTOR'S NOTES、読む文は TRANSCRIPT に分けて渡す。
+    # 日本語で指示すると、指示文まで読み上げてしまうことがあるため。
     # セリフ本文は一切変えずに渡す。
     return (
         "### DIRECTOR'S NOTES\n"
         f"Style: {style}\n"
-        "Language: Japanese\n\n"
+        "Language: Japanese. Speak ONLY the transcript below. "
+        "Never read these notes aloud.\n\n"
         "### TRANSCRIPT\n"
         f"{text}"
     )
+
+
+CHECK_MODEL = "gemini-3.5-flash"
+
+
+def norm(t: str) -> str:
+    return re.sub(r"[\s、。，．,.！？!?…「」『』（）()ー〜~・]", "", t)
+
+
+def check_audio(client, path: Path, text: str) -> tuple[bool, str]:
+    """音声を文字起こしして、セリフ以外（指示文など）を読んでいないか確かめる。"""
+    from google.genai import types
+
+    r = client.models.generate_content(
+        model=CHECK_MODEL,
+        contents=[
+            types.Part.from_bytes(data=path.read_bytes(), mime_type="audio/wav"),
+            "最後まで全部聞いて、話されている言葉をすべて一字一句文字起こししてください。"
+            "文字起こし以外は書かないでください。",
+        ],
+    )
+    heard = (r.text or "").strip()
+    # 読み方の揺れ（漢字/かな）は許し、明らかに長いときだけ「余計なことを読んだ」とみなす
+    ok = len(norm(heard)) <= len(norm(text)) * 1.4 + 4
+    return ok, heard
 
 
 def synth(client, model: str, voice: str, prompt: str) -> tuple[bytes, int]:
@@ -175,6 +201,8 @@ def main() -> None:
     ap.add_argument("--lines", default=str(HERE / "lines.csv"))
     ap.add_argument("--voices", default=str(HERE / "voices.json"))
     ap.add_argument("--out", default=str(HERE / "out"))
+    ap.add_argument("--check", action="store_true",
+                    help=f"生成後に {CHECK_MODEL} で文字起こしし、指示文まで読んでいたら作り直す（最大2回）")
     ap.add_argument("--dry-run", action="store_true", help="API を呼ばず、作る予定のファイルと指示文を表示")
     ap.add_argument("--list-voices", action="store_true", help="使える声の一覧を表示して終了")
     ap.add_argument("--list-models", action="store_true", help="使える TTS モデルの一覧を表示して終了")
@@ -212,15 +240,26 @@ def main() -> None:
     for r in todo:
         v = voices[r["speaker"]]
         name = out_name(r)
-        prompt = build_prompt(v["style"], r["text"])
+        prompt = build_prompt(v.get("style_en") or v["style"], r["text"])
         print(f"[{r['cut']:02d}-{r['n']}] {r['speaker']}（{v['voice']}）: {r['text']}")
         if args.dry_run:
             print(f"    → {name}\n    指示文: {prompt!r}")
             continue
+        redo = 0
         for attempt in range(3):
             try:
                 pcm, rate = synth(client, args.model, v["voice"], prompt)
                 save_wav(out_dir / name, pcm, rate)
+                if args.check:
+                    ok, heard = check_audio(client, out_dir / name, r["text"])
+                    print(f"    聞こえた内容: {heard}")
+                    if not ok:
+                        (out_dir / name).unlink(missing_ok=True)
+                        if redo < 2:
+                            redo += 1
+                            print("    セリフ以外も読んでいるようなので作り直します")
+                            continue
+                        raise RuntimeError(f"セリフ以外を読んでしまいました: {heard}")
                 print(f"    → 保存しました: out/{name}")
                 made += 1
                 break

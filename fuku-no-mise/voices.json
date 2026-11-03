@@ -1,9 +1,9 @@
 {
-  "福": {"voice": "Leda", "style": "かわいい高めの女の子の声で、ハキハキと明るく話す"},
-  "ジョン": {"voice": "Puck", "style": "元気いっぱいの少年の声で、早めに話す"},
-  "ちゃこ姉ちゃん": {"voice": "Sulafat", "style": "落ち着いた、ちょっと低めの女性の声で、ゆっくりと優しく話す"},
-  "ママ": {"voice": "Achernar", "style": "30代の女性の声で、疲れて静かに、小さめの声で話す"},
-  "ナレーション": {"voice": "Despina", "style": "落ち着いた女性の声で、物語を読むようにゆっくり話す"},
-  "20代": {"voice": "Callirrhoe", "style": "20代の女性の声で、力を抜いた日常会話の調子で話す"},
-  "50代": {"voice": "Gacrux", "style": "50代の女性の声で、力を抜いた日常会話の調子で話す"}
+  "福": {"voice": "Leda", "style": "かわいい高めの女の子の声で、ハキハキと明るく話す", "style_en": "A cute, high-pitched young girl's voice. Crisp, bright and cheerful."},
+  "ジョン": {"voice": "Puck", "style": "元気いっぱいの少年の声で、早めに話す", "style_en": "An energetic young boy's voice, full of pep. Speaks a little fast."},
+  "ちゃこ姉ちゃん": {"voice": "Sulafat", "style": "落ち着いた、ちょっと低めの女性の声で、ゆっくりと優しく話す", "style_en": "A calm, slightly low woman's voice. Speaks slowly and gently."},
+  "ママ": {"voice": "Achernar", "style": "30代の女性の声で、疲れて静かに、小さめの声で話す", "style_en": "A woman in her 30s, tired. Speaks quietly and softly, low volume."},
+  "ナレーション": {"voice": "Despina", "style": "落ち着いた女性の声で、物語を読むようにゆっくり話す", "style_en": "A calm woman's voice, reading a story slowly like a storyteller."},
+  "20代": {"voice": "Callirrhoe", "style": "20代の女性の声で、力を抜いた日常会話の調子で話す", "style_en": "A woman in her 20s. Relaxed, casual everyday conversation."},
+  "50代": {"voice": "Gacrux", "style": "50代の女性の声で、力を抜いた日常会話の調子で話す", "style_en": "A woman in her 50s. Relaxed, casual everyday conversation."}
 }
