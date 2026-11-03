@@ -1,0 +1,592 @@
+<title>スタンプ工房</title>
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Dela+Gothic+One&family=Yusei+Magic&family=Zen+Maru+Gothic:wght@900&family=Hachi+Maru+Pop&family=RocknRoll+One&family=DotGothic16&family=Kaisei+Decol:wght@700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* Layout: three working columns (sheet of stickers / stage / controls); collapses to a sticky stage on phones */
+:root{
+  --bg:#f2f0f7; --surface:#ffffff; --ink:#2a2340; --muted:#6b6483; --line:#dcd6e8;
+  --accent:#f0476f; --accent-ink:#ffffff; --ok:#1f9e84; --warn:#c77700;
+  --chk1:#ffffff; --chk2:#ebe7f3; --guide:rgba(240,71,111,.55);
+  --f-display:"Mochiy Pop One","Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1a1725; --surface:#242032; --ink:#f0ecf8; --muted:#a69ebd; --line:#3a3450;
+  --accent:#ff6b8f; --accent-ink:#1a1725; --ok:#4fd1b4; --warn:#f0a83a;
+  --chk1:#2d2940; --chk2:#252135; --guide:rgba(255,107,143,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1a1725; --surface:#242032; --ink:#f0ecf8; --muted:#a69ebd; --line:#3a3450;
+  --accent:#ff6b8f; --accent-ink:#1a1725; --ok:#4fd1b4; --warn:#f0a83a;
+  --chk1:#2d2940; --chk2:#252135; --guide:rgba(255,107,143,.6); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;max-width:1360px;margin:0 auto 14px}
+header.top h1{font-family:var(--f-display);font-weight:400;font-size:26px;margin:0;letter-spacing:.02em}
+header.top h1 span{color:var(--accent)}
+header.top p{margin:0;color:var(--muted);font-size:13px}
+.app{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr) 340px;gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+h2{font-family:var(--f-display);font-weight:400;font-size:15px;margin:0 0 10px;text-wrap:balance}
+.lbl{font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+
+/* sheet */
+.sheet{display:flex;flex-direction:column;gap:12px}
+#thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.th{position:relative;border:2px solid transparent;border-radius:10px;padding:0;cursor:pointer;
+  background:repeating-conic-gradient(var(--chk1) 0 25%,var(--chk2) 0 50%) 0 0/12px 12px;aspect-ratio:370/320;overflow:hidden}
+.th canvas{width:100%;height:100%;display:block}
+.th.on{border-color:var(--accent)}
+.th:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.th .no{position:absolute;left:4px;top:3px;font-size:10px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.th .dot{position:absolute;right:5px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.th .dot.warn{background:var(--warn)} .th .dot.empty{background:var(--line)}
+.th .tag{position:absolute;left:4px;bottom:3px;font-size:9px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:0 4px}
+
+/* stage */
+.stage{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cvwrap{position:relative;width:100%;max-width:620px;margin:0 auto;aspect-ratio:370/320;border-radius:var(--r);overflow:hidden;
+  background:repeating-conic-gradient(var(--chk1) 0 25%,var(--chk2) 0 50%) 0 0/20px 20px;border:1px solid var(--line);touch-action:none}
+#cv{width:100%;height:100%;display:block;cursor:grab}
+#cv.drag{cursor:grabbing}
+.stagebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;max-width:620px;margin:0 auto;width:100%}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.hint{color:var(--muted);font-size:12px}
+.status{max-width:620px;margin:0 auto;width:100%;font-size:12px;color:var(--muted);min-height:1.5em}
+.status.warn{color:var(--warn)} .status.ok{color:var(--ok)}
+
+/* controls */
+.panel{display:flex;flex-direction:column;gap:12px}
+details.grp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details.grp summary{cursor:pointer;padding:12px 14px;font-family:var(--f-display);font-size:14px;list-style:none;display:flex;justify-content:space-between}
+details.grp summary::after{content:"+";color:var(--muted)}
+details.grp[open] summary::after{content:"−"}
+details.grp summary:focus-visible{outline:3px solid var(--accent);outline-offset:-3px;border-radius:var(--r)}
+.body{padding:0 14px 14px;display:grid;gap:10px}
+.row{display:grid;grid-template-columns:72px minmax(0,1fr) 40px;gap:8px;align-items:center}
+.row.two{grid-template-columns:72px minmax(0,1fr)}
+.row label{font-size:12px;color:var(--muted)}
+.row output{font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+textarea,select,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+textarea{resize:vertical;min-height:58px;font-size:16px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=color]{width:44px;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px}
+.colors{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;font-family:var(--f-display);font-weight:400;padding:10px 18px;font-size:15px}
+.btn.danger{color:var(--accent)}
+.file{position:relative;overflow:hidden;display:inline-flex}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.spec{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.spec b{color:var(--ink);font-variant-numeric:tabular-nums}
+.sum{font-size:13px}
+.sum b{font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+a{color:var(--accent)}
+
+@media (max-width:1080px){
+  .app{grid-template-columns:minmax(0,1fr) 330px}
+  .sheet{grid-column:1 / -1;order:3}
+  #thumbs{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .stage{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:6px;margin-inline:-4px;padding-inline:4px}
+  .cvwrap{max-width:min(100%,46vh*1.156)}
+  .sheet{order:2}
+  .panel{order:3}
+  #thumbs{display:flex;overflow-x:auto;gap:8px;padding-bottom:4px}
+  #thumbs .th{flex:0 0 84px}
+  .stagebar .hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<header class="top">
+  <h1>スタンプ<span>工房</span></h1>
+  <p>文字・ふきだし・写真でLINEスタンプを作って、提出用ZIPをそのまま保存できます。</p>
+</header>
+
+<main class="app">
+  <section class="sheet card" aria-label="スタンプ一覧">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h2 style="margin:0">スタンプ一覧</h2>
+      <select id="count" aria-label="スタンプの個数" style="width:auto">
+        <option value="8">8個</option><option value="16">16個</option><option value="24">24個</option><option value="32">32個</option><option value="40">40個</option>
+      </select>
+    </div>
+    <div id="thumbs"></div>
+    <div class="hint">緑の点は提出OK、オレンジは要確認、灰色は未作成です。</div>
+  </section>
+
+  <section class="stage" aria-label="編集エリア">
+    <div class="cvwrap"><canvas id="cv" width="740" height="640" aria-label="スタンプの編集キャンバス。ドラッグで選んだパーツを動かせます"></canvas></div>
+    <div class="stagebar">
+      <div class="seg" role="group" aria-label="ドラッグで動かすパーツ">
+        <button type="button" data-target="text" id="tg-text">文字</button>
+        <button type="button" data-target="img" id="tg-img">画像</button>
+        <button type="button" data-target="shape" id="tg-shape">図形</button>
+      </div>
+      <span class="hint">ドラッグで移動・点線は余白10pxの目安</span>
+      <div class="btns">
+        <button class="btn" type="button" id="prev" aria-label="前のスタンプ">‹ 前</button>
+        <button class="btn" type="button" id="next" aria-label="次のスタンプ">次 ›</button>
+      </div>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" aria-label="設定">
+    <details class="grp" open id="g-text">
+      <summary>文字</summary>
+      <div class="body">
+        <textarea id="t-str" data-p="text.str" rows="2" placeholder="例：ありがとう！（改行もできます）"></textarea>
+        <div class="row two"><label for="t-font">書体</label><select id="t-font" data-p="text.font" data-num></select></div>
+        <div class="row"><label for="t-size">大きさ</label><input type="range" id="t-size" data-p="text.size" data-num min="16" max="180"><output for="t-size"></output></div>
+        <div class="row"><label for="t-rot">傾き</label><input type="range" id="t-rot" data-p="text.rot" data-num min="-45" max="45"><output for="t-rot"></output></div>
+        <div class="row"><label for="t-sw">文字のフチ</label><input type="range" id="t-sw" data-p="text.strokeW" data-num min="0" max="16"><output for="t-sw"></output></div>
+        <div class="row two"><label>色</label><div class="colors">
+          <input type="color" id="t-color" data-p="text.color" aria-label="文字の色"><span class="hint">文字</span>
+          <input type="color" id="t-stroke" data-p="text.stroke" aria-label="文字のフチの色"><span class="hint">フチ</span></div></div>
+      </div>
+    </details>
+
+    <details class="grp" open id="g-shape">
+      <summary>図形</summary>
+      <div class="body">
+        <div class="row two"><label for="s-type">形</label><select id="s-type" data-p="shape.type"></select></div>
+        <div class="row"><label for="s-scale">大きさ</label><input type="range" id="s-scale" data-p="shape.scale" data-num min="0.3" max="1.15" step="0.01"><output for="s-scale"></output></div>
+        <div class="row two"><label for="s-color">色</label><div class="colors"><input type="color" id="s-color" data-p="shape.color"><span class="hint">ふきだしなどの塗り</span></div></div>
+      </div>
+    </details>
+
+    <details class="grp" id="g-img">
+      <summary>画像</summary>
+      <div class="body">
+        <div class="btns">
+          <span class="btn file">画像を選ぶ<input type="file" id="i-file" accept="image/*" aria-label="画像ファイルを選ぶ"></span>
+          <button class="btn danger" type="button" id="i-del">画像を外す</button>
+        </div>
+        <div class="hint">写真やイラストを読み込めます。貼り付け（Ctrl+V）でも入ります。</div>
+        <div id="i-ctrls" class="body" style="padding:0">
+          <div class="row"><label for="i-scale">大きさ</label><input type="range" id="i-scale" data-p="img.scale" data-num min="0.1" max="3" step="0.01"><output for="i-scale"></output></div>
+          <div class="row"><label for="i-rot">傾き</label><input type="range" id="i-rot" data-p="img.rot" data-num min="-180" max="180"><output for="i-rot"></output></div>
+          <label class="chk"><input type="checkbox" id="i-cut" data-p="img.cut">背景を自動で消す（四隅と同じ色を透明に）</label>
+          <div class="row"><label for="i-tol">消す強さ</label><input type="range" id="i-tol" data-p="img.tol" data-num min="5" max="120"><output for="i-tol"></output></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="grp" open id="g-out">
+      <summary>全体の白フチ</summary>
+      <div class="body">
+        <label class="chk"><input type="checkbox" id="o-on" data-p="outline.on">スタンプの外側にフチをつける</label>
+        <div class="row"><label for="o-w">太さ</label><input type="range" id="o-w" data-p="outline.w" data-num min="1" max="14"><output for="o-w"></output></div>
+        <div class="row two"><label for="o-color">色</label><div class="colors"><input type="color" id="o-color" data-p="outline.color"><span class="hint">トークの背景が暗くても見やすくなります</span></div></div>
+      </div>
+    </details>
+
+    <div class="card" style="display:grid;gap:8px">
+      <h2 style="margin:0">この1枚</h2>
+      <div class="btns">
+        <button class="btn" type="button" id="dup">次の枠へコピー</button>
+        <button class="btn" type="button" id="png1">PNGで保存</button>
+        <button class="btn danger" type="button" id="clear">白紙に戻す</button>
+      </div>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h2 style="margin:0">提出用に書き出す</h2>
+      <div class="row two"><label for="mainIdx">メイン画像</label><select id="mainIdx"></select></div>
+      <div class="row two"><label for="tabIdx">タブ画像</label><select id="tabIdx"></select></div>
+      <label class="chk"><input type="checkbox" id="trim">余白をつめて書き出す（推奨）</label>
+      <div class="sum" id="sum"></div>
+      <button class="btn primary" type="button" id="zip">ZIPで保存</button>
+      <ul class="spec">
+        <li>スタンプ画像 <b>最大 370×320px</b>・偶数サイズ・PNG透過</li>
+        <li>メイン画像 <b>240×240px</b>／タブ画像 <b>96×74px</b></li>
+        <li>ZIPの中身：01.png〜, main.png, tab.png</li>
+        <li>保存したZIPは <a href="https://creator.line.me/ja/" target="_blank" rel="noopener">LINE Creators Market</a> の「ZIPアップロード」で登録できます。</li>
+      </ul>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+const W = 370, H = 320, M = 10, KEY = 'stamp-kobo-v1';
+const FONTS = [
+  {f:'Mochiy Pop One', w:400, label:'ポップ（もっちり）'},
+  {f:'Zen Maru Gothic', w:900, label:'まるゴシック 太'},
+  {f:'Dela Gothic One', w:400, label:'極太ゴシック'},
+  {f:'Yusei Magic', w:400, label:'マジック手書き'},
+  {f:'Hachi Maru Pop', w:400, label:'丸文字'},
+  {f:'RocknRoll One', w:400, label:'ロックンロール'},
+  {f:'Kaisei Decol', w:700, label:'明朝デコ'},
+  {f:'DotGothic16', w:400, label:'ドット'}
+];
+const SHAPES = [['none','なし'],['bubble','ふきだし'],['circle','まる'],['box','しかく'],['burst','ギザギザ'],['heart','ハート'],['cloud','もくもく']];
+
+function blank(){ return {
+  shape:{type:'none', color:'#ffe066', scale:1, x:185, y:160},
+  img:null,
+  text:{str:'', font:0, size:64, color:'#3a2c5a', stroke:'#ffffff', strokeW:6, x:185, y:160, rot:0},
+  outline:{on:true, color:'#ffffff', w:7},
+  target:'text'
+};}
+function sample(str, font, size, color, shape, scolor, opts={}){
+  const s = blank();
+  Object.assign(s.text, {str, font, size, color}, opts.text||{});
+  Object.assign(s.shape, {type:shape, color:scolor}, opts.shape||{});
+  return s;
+}
+const SAMPLES = [
+  sample('おはよう', 0, 70, '#e8572f', 'circle', '#ffe27a'),
+  sample('ありがとう\nございます', 1, 52, '#ffffff', 'bubble', '#ff8fab', {text:{stroke:'#d94a72', strokeW:5, y:142}}),
+  sample('OK!', 2, 120, '#1f9e84', 'none', '#ffffff', {text:{stroke:'#ffffff', strokeW:10, rot:-8}}),
+  sample('おつかれ\nさまです', 3, 60, '#3a2c5a', 'box', '#c9e8ff'),
+  sample('ごめんね…', 4, 54, '#5a4a8a', 'cloud', '#e6dcff', {shape:{scale:.85}}),
+  sample('りょ！', 5, 100, '#ffffff', 'burst', '#ff5a5a', {text:{stroke:'#a82020', strokeW:6}}),
+  sample('おやすみ', 6, 62, '#fff7d6', 'circle', '#3c3a78', {text:{stroke:'#3c3a78', strokeW:0}}),
+  sample('すき', 0, 84, '#ffffff', 'heart', '#ff6f91', {text:{stroke:'#e0446b', strokeW:4, y:150}, shape:{scale:.88}})
+];
+
+// ---------- state ----------
+let state = load() || {count:8, cur:0, main:0, tab:0, trim:true, stickers:[]};
+while (state.stickers.length < 40) state.stickers.push(state.stickers.length < SAMPLES.length ? SAMPLES[state.stickers.length] : blank());
+const cur = () => state.stickers[state.cur];
+
+function load(){ try { const v = JSON.parse(localStorage.getItem(KEY)); return v && Array.isArray(v.stickers) ? v : null; } catch(e){ return null; } }
+let saveT = 0, warnedQuota = false;
+function save(){ clearTimeout(saveT); saveT = setTimeout(() => {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ if(!warnedQuota){ warnedQuota = true; toast('画像が大きいため、この端末への自動保存ができませんでした'); } }
+}, 500); }
+
+// ---------- canvas helpers ----------
+const mk = (w,h) => { const c = document.createElement('canvas'); c.width = Math.max(1,Math.round(w)); c.height = Math.max(1,Math.round(h)); return c; };
+const imgCache = new Map(), cutCache = new Map();
+function getImg(src){
+  let im = imgCache.get(src);
+  if(!im){ im = new Image(); im.onload = () => { refreshAll(); }; im.src = src; imgCache.set(src, im); }
+  return im.complete && im.naturalWidth ? im : null;
+}
+function cutBg(im, tol){
+  const s = Math.min(1, 1200/Math.max(im.naturalWidth, im.naturalHeight));
+  const w = Math.round(im.naturalWidth*s), h = Math.round(im.naturalHeight*s);
+  const c = mk(w,h), x = c.getContext('2d'); x.drawImage(im,0,0,w,h);
+  const d = x.getImageData(0,0,w,h), p = d.data;
+  // reference color: average of the four corners
+  const cs = [0, w-1, (h-1)*w, h*w-1]; let r0=0,g0=0,b0=0;
+  for(const i of cs){ r0+=p[i*4]; g0+=p[i*4+1]; b0+=p[i*4+2]; } r0/=4; g0/=4; b0/=4;
+  const t2 = tol*tol*3, seen = new Uint8Array(w*h), st = new Int32Array(w*h); let n = 0;
+  const push = i => { if(seen[i]) return; seen[i]=1; const o=i*4, dr=p[o]-r0, dg=p[o+1]-g0, db=p[o+2]-b0;
+    if(p[o+3] < 12 || dr*dr+dg*dg+db*db <= t2) st[n++] = i; };
+  for(let X=0;X<w;X++){ push(X); push((h-1)*w+X); }
+  for(let Y=0;Y<h;Y++){ push(Y*w); push(Y*w+w-1); }
+  while(n){ const i = st[--n]; p[i*4+3] = 0; const X = i % w, Y = (i / w) | 0;
+    if(X>0) push(i-1); if(X<w-1) push(i+1); if(Y>0) push(i-w); if(Y<h-1) push(i+w); }
+  // soften the cut edge a little
+  for(let i=0;i<w*h;i++){ if(p[i*4+3]===0) continue; const X=i%w, Y=(i/w)|0; let z=0;
+    if(X>0&&p[(i-1)*4+3]===0) z++; if(X<w-1&&p[(i+1)*4+3]===0) z++; if(Y>0&&p[(i-w)*4+3]===0) z++; if(Y<h-1&&p[(i+w)*4+3]===0) z++;
+    if(z) p[i*4+3] = Math.min(p[i*4+3], 255 - z*50); }
+  x.putImageData(d,0,0); return c;
+}
+function imgSource(img){
+  const im = getImg(img.src); if(!im) return null;
+  if(!img.cut) return im;
+  const key = img.src.length + '|' + img.src.slice(-80) + '|' + img.tol;
+  let c = cutCache.get(key); if(!c){ c = cutBg(im, img.tol); cutCache.set(key, c); if(cutCache.size > 12) cutCache.delete(cutCache.keys().next().value); }
+  return c;
+}
+
+function shapePath(x, sh){
+  const t = sh.type; x.beginPath();
+  if(t==='circle'){ x.ellipse(0,0,150,132,0,0,Math.PI*2); }
+  else if(t==='box'){ x.roundRect(-160,-118,320,236,38); }
+  else if(t==='bubble'){ x.roundRect(-160,-118,320,200,70); x.moveTo(-80,70); x.lineTo(-118,128); x.lineTo(-24,78); x.closePath(); }
+  else if(t==='burst'){ const n=18; for(let i=0;i<n*2;i++){ const a=i/(n*2)*Math.PI*2 - Math.PI/2, r=i%2?0.78:1; const px=Math.cos(a)*165*r, py=Math.sin(a)*140*r; i?x.lineTo(px,py):x.moveTo(px,py);} x.closePath(); }
+  else if(t==='heart'){ x.moveTo(0,128); x.bezierCurveTo(-120,52,-200,-10,-158,-88); x.bezierCurveTo(-120,-150,-30,-140,0,-74); x.bezierCurveTo(30,-140,120,-150,158,-88); x.bezierCurveTo(200,-10,120,52,0,128); x.closePath(); }
+  else if(t==='cloud'){ const bumps=[[-110,10,62],[-62,-62,64],[20,-80,70],[100,-44,62],[122,34,56],[50,78,58],[-40,80,58]]; for(const [bx,by,r] of bumps){ x.moveTo(bx+r,by); x.arc(bx,by,r,0,Math.PI*2);} x.moveTo(110,0); x.ellipse(0,0,110,70,0,0,Math.PI*2); }
+}
+function fontStr(t){ const F = FONTS[t.font] || FONTS[0]; return `${F.w} ${t.size}px "${F.f}", "Zen Maru Gothic", sans-serif`; }
+
+function compose(st, k){
+  const c = mk(W*k, H*k), x = c.getContext('2d'); x.scale(k,k);
+  const sh = st.shape;
+  if(sh.type !== 'none'){ x.save(); x.translate(sh.x, sh.y); x.scale(sh.scale, sh.scale); shapePath(x, sh); x.fillStyle = sh.color; x.fill('nonzero'); x.restore(); }
+  if(st.img){ const src = imgSource(st.img); if(src){ const sw = src.naturalWidth||src.width, shh = src.naturalHeight||src.height;
+    const base = Math.min((W-2*M)/sw, (H-2*M)/shh) * st.img.scale;
+    x.save(); x.translate(st.img.x, st.img.y); x.rotate(st.img.rot*Math.PI/180); x.imageSmoothingQuality='high';
+    x.drawImage(src, -sw*base/2, -shh*base/2, sw*base, shh*base); x.restore(); } }
+  const t = st.text;
+  if(t.str.trim()){
+    x.save(); x.translate(t.x, t.y); x.rotate(t.rot*Math.PI/180);
+    x.font = fontStr(t); x.textAlign='center'; x.textBaseline='middle'; x.lineJoin='round'; x.miterLimit=2;
+    const lines = t.str.split('\n'), lh = t.size*1.12, top = -lh*lines.length/2 + lh/2;
+    if(t.strokeW > 0){ x.strokeStyle = t.stroke; x.lineWidth = t.strokeW*2; lines.forEach((l,i)=>x.strokeText(l,0,top+i*lh)); }
+    x.fillStyle = t.color; lines.forEach((l,i)=>x.fillText(l,0,top+i*lh));
+    x.restore();
+  }
+  return c;
+}
+function render(st, k){
+  const base = compose(st, k);
+  if(!st.outline.on || st.outline.w <= 0) return base;
+  const sil = mk(base.width, base.height), sx = sil.getContext('2d');
+  sx.drawImage(base,0,0); sx.globalCompositeOperation='source-in'; sx.fillStyle = st.outline.color; sx.fillRect(0,0,sil.width,sil.height);
+  const out = mk(base.width, base.height), o = out.getContext('2d'), r = st.outline.w * k;
+  for(const f of [1, .66, .33]){ const rr = r*f, n = Math.max(12, Math.ceil(rr*2.4));
+    for(let i=0;i<n;i++){ const a = i/n*Math.PI*2; o.drawImage(sil, Math.cos(a)*rr, Math.sin(a)*rr); } }
+  o.drawImage(base,0,0); return out;
+}
+function bbox(c){
+  const d = c.getContext('2d').getImageData(0,0,c.width,c.height).data, w = c.width, h = c.height;
+  let x0=w, y0=h, x1=-1, y1=-1;
+  for(let y=0;y<h;y++){ const row=y*w; for(let x=0;x<w;x++){ if(d[(row+x)*4+3] > 8){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } } }
+  return x1 < 0 ? null : {x:x0, y:y0, w:x1-x0+1, h:y1-y0+1};
+}
+function check(st){
+  const c = render(st,1), b = bbox(c);
+  if(!b) return {s:'empty', msg:'まだ何も描かれていません。', c, b};
+  const tooBig = b.w > W-2*M || b.h > H-2*M;
+  const atEdge = b.x < M || b.y < M || b.x+b.w > W-M || b.y+b.h > H-M;
+  if(state.trim ? tooBig : atEdge) return {s:'warn', msg:'端まで描かれています。少し小さくすると余白10pxが確保できます。', c, b};
+  return {s:'ok', msg:'提出OKです。', c, b};
+}
+function exportSticker(st){
+  const r = check(st); if(!r.b) return null;
+  if(!state.trim) return r.c;
+  let w = Math.min(W, r.b.w + 2*M), h = Math.min(H, r.b.h + 2*M); w += w%2; h += h%2;
+  const out = mk(w,h); out.getContext('2d').drawImage(r.c, r.b.x, r.b.y, r.b.w, r.b.h, Math.floor((w-r.b.w)/2), Math.floor((h-r.b.h)/2), r.b.w, r.b.h);
+  return out;
+}
+function fitInto(st, tw, th, m){
+  const c = render(st, 2), b = bbox(c); const out = mk(tw, th); if(!b) return out;
+  const s = Math.min((tw-2*m)/b.w, (th-2*m)/b.h), dw = b.w*s, dh = b.h*s;
+  const x = out.getContext('2d'); x.imageSmoothingQuality='high'; x.drawImage(c, b.x, b.y, b.w, b.h, (tw-dw)/2, (th-dh)/2, dw, dh);
+  return out;
+}
+const toBlob = c => new Promise(res => c.toBlob(res, 'image/png'));
+
+// ---------- fonts ----------
+function ensureFont(t){
+  if(!document.fonts || !t.str.trim()) return;
+  document.fonts.load(fontStr(t), t.str).then(fs => { if(fs.length) refreshAll(); }).catch(()=>{});
+}
+
+// ---------- UI ----------
+const $ = s => document.querySelector(s);
+const cv = $('#cv'), cx = cv.getContext('2d');
+const thumbs = $('#thumbs');
+FONTS.forEach((F,i) => { const o = new Option(F.label, i); o.style.fontFamily = `"${F.f}"`; $('#t-font').add(o); });
+SHAPES.forEach(([v,l]) => $('#s-type').add(new Option(l, v)));
+
+let raf = 0;
+function drawStage(){
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(() => {
+    const st = cur(), r = render(st, 2);
+    cx.clearRect(0,0,cv.width,cv.height); cx.drawImage(r,0,0);
+    cx.save(); cx.setLineDash([8,8]); cx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--guide') || 'rgba(240,71,111,.5)'; cx.lineWidth = 2;
+    cx.strokeRect(M*2, M*2, (W-2*M)*2, (H-2*M)*2); cx.restore();
+    updateThumb(state.cur, r);
+  });
+}
+function updateThumb(i, rendered){
+  const btn = thumbs.children[i]; if(!btn) return;
+  const tc = btn.querySelector('canvas'), tx = tc.getContext('2d');
+  const r = rendered || render(state.stickers[i], 1);
+  tx.clearRect(0,0,tc.width,tc.height); tx.drawImage(r,0,0,tc.width,tc.height);
+  const ck = check(state.stickers[i]); const dot = btn.querySelector('.dot');
+  dot.className = 'dot' + (ck.s==='ok' ? '' : ' ' + ck.s);
+  btn.setAttribute('aria-label', `スタンプ${i+1}：${ck.msg}`);
+  if(i === state.cur){ const s = $('#status'); s.textContent = `${String(i+1).padStart(2,'0')}.png ― ${ck.msg}`; s.className = 'status' + (ck.s==='ok'?' ok':ck.s==='warn'?' warn':''); }
+  updateSummary();
+}
+function buildThumbs(){
+  thumbs.textContent = '';
+  for(let i=0;i<state.count;i++){
+    const b = document.createElement('button'); b.type='button'; b.className='th' + (i===state.cur?' on':'');
+    const c = mk(185,160); b.append(c);
+    const no = document.createElement('span'); no.className='no'; no.textContent = String(i+1).padStart(2,'0'); b.append(no);
+    const dot = document.createElement('span'); dot.className='dot'; b.append(dot);
+    if(i===state.main || i===state.tab){ const tg = document.createElement('span'); tg.className='tag'; tg.textContent = i===state.main && i===state.tab ? 'メイン/タブ' : i===state.main ? 'メイン' : 'タブ'; b.append(tg); }
+    b.addEventListener('click', () => select(i));
+    thumbs.append(b);
+  }
+  for(let i=0;i<state.count;i++) updateThumb(i);
+  // main/tab selectors
+  for(const id of ['#mainIdx','#tabIdx']){ const s = $(id); s.textContent=''; for(let i=0;i<state.count;i++) s.add(new Option(`${String(i+1).padStart(2,'0')} のスタンプから作る`, i)); }
+  $('#mainIdx').value = state.main; $('#tabIdx').value = state.tab;
+}
+function updateSummary(){
+  let ok=0, warn=0, empty=0;
+  for(let i=0;i<state.count;i++){ const s = thumbs.children[i]?.querySelector('.dot')?.className || ''; if(s.includes('empty')) empty++; else if(s.includes('warn')) warn++; else ok++; }
+  $('#sum').innerHTML = `<b>${state.count}</b>個中 提出OK <b>${ok}</b>　要確認 <b>${warn}</b>　未作成 <b>${empty}</b>`;
+}
+function refreshAll(){ drawStage(); for(let i=0;i<state.count;i++) if(i!==state.cur) updateThumb(i); }
+
+function getP(o, p){ return p.split('.').reduce((a,k)=>a?.[k], o); }
+function setP(o, p, v){ const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a,k)=>a[k], o); if(t) t[last] = v; }
+const controls = [...document.querySelectorAll('[data-p]')];
+function syncControls(){
+  const st = cur();
+  for(const el of controls){
+    const v = getP(st, el.dataset.p);
+    el.disabled = el.dataset.p.startsWith('img.') && !st.img;
+    if(v === undefined) continue;
+    if(el.type === 'checkbox') el.checked = !!v; else el.value = v;
+    const out = el.parentElement.querySelector(`output[for="${el.id}"]`); if(out) out.textContent = fmt(el);
+  }
+  $('#i-del').disabled = !st.img;
+  document.querySelectorAll('[data-target]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.target === st.target)));
+}
+function fmt(el){ const v = +el.value; if(el.id==='s-scale'||el.id==='i-scale') return Math.round(v*100)+'%'; if(el.id.endsWith('rot')) return v+'°'; return String(v); }
+for(const el of controls){
+  el.addEventListener('input', () => {
+    const st = cur(); if(el.dataset.p.startsWith('img.') && !st.img) return;
+    const v = el.type==='checkbox' ? el.checked : ('num' in el.dataset ? +el.value : el.value);
+    setP(st, el.dataset.p, v);
+    const out = el.parentElement.querySelector(`output[for="${el.id}"]`); if(out) out.textContent = fmt(el);
+    if(el.dataset.p.startsWith('text.')) { ensureFont(st.text); setTarget('text', true); }
+    else if(el.dataset.p.startsWith('shape.')) setTarget('shape', true);
+    else if(el.dataset.p.startsWith('img.')) setTarget('img', true);
+    drawStage(); save();
+  });
+}
+function setTarget(t, quiet){ cur().target = t; document.querySelectorAll('[data-target]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.target === t))); if(!quiet) save(); }
+document.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
+  if(b.dataset.target==='img' && !cur().img){ $('#g-img').open = true; toast('先に「画像を選ぶ」から画像を読み込んでください'); return; }
+  if(b.dataset.target==='shape' && cur().shape.type==='none'){ cur().shape.type='bubble'; syncControls(); drawStage(); }
+  setTarget(b.dataset.target);
+}));
+
+function select(i){
+  state.cur = Math.max(0, Math.min(state.count-1, i));
+  [...thumbs.children].forEach((b,j) => b.classList.toggle('on', j===state.cur));
+  thumbs.children[state.cur]?.scrollIntoView({block:'nearest', inline:'nearest'});
+  clearArmed();
+  syncControls(); ensureFont(cur().text); drawStage(); save();
+}
+$('#prev').onclick = () => select(state.cur-1);
+$('#next').onclick = () => select(state.cur+1);
+
+// drag on canvas
+let drag = null;
+cv.addEventListener('pointerdown', e => {
+  const st = cur(); const layer = st.target==='img' ? st.img : st.target==='shape' ? st.shape : st.text; if(!layer) return;
+  const r = cv.getBoundingClientRect();
+  drag = {id:e.pointerId, sx:e.clientX, sy:e.clientY, ox:layer.x, oy:layer.y, k:W/r.width, layer};
+  cv.setPointerCapture(e.pointerId); cv.classList.add('drag');
+});
+cv.addEventListener('pointermove', e => {
+  if(!drag || e.pointerId !== drag.id) return;
+  drag.layer.x = Math.round(drag.ox + (e.clientX-drag.sx)*drag.k);
+  drag.layer.y = Math.round(drag.oy + (e.clientY-drag.sy)*drag.k);
+  drawStage();
+});
+const endDrag = () => { if(drag){ drag = null; cv.classList.remove('drag'); save(); } };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+
+// images
+function readImage(file){
+  if(!file || !file.type.startsWith('image/')) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const s = Math.min(1, 1000/Math.max(im.naturalWidth, im.naturalHeight));
+      const c = mk(im.naturalWidth*s, im.naturalHeight*s); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      let src = c.toDataURL('image/webp', .92); if(!src.startsWith('data:image/webp')) src = c.toDataURL('image/png');
+      const st = cur(); st.img = {src, x:185, y:160, scale:1, rot:0, cut:false, tol:40};
+      st.target = 'img'; $('#g-img').open = true; syncControls(); drawStage(); save();
+      toast('画像を読み込みました。背景を消すときはチェックを入れてください');
+    };
+    im.onerror = () => toast('この画像は読み込めませんでした。PNGかJPEGで試してください');
+    im.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+$('#i-file').addEventListener('change', e => { readImage(e.target.files[0]); e.target.value=''; });
+document.addEventListener('paste', e => { const f = [...(e.clipboardData?.files||[])].find(f => f.type.startsWith('image/')); if(f){ e.preventDefault(); readImage(f); } });
+$('.cvwrap').addEventListener('dragover', e => e.preventDefault());
+$('.cvwrap').addEventListener('drop', e => { e.preventDefault(); readImage(e.dataTransfer.files[0]); });
+$('#i-del').onclick = () => { const st = cur(); st.img = null; if(st.target==='img') st.target='text'; syncControls(); drawStage(); save(); };
+
+// sticker actions
+$('#dup').onclick = () => {
+  if(state.cur >= state.count-1){ toast('最後の枠です。個数を増やすとコピーできます'); return; }
+  state.stickers[state.cur+1] = JSON.parse(JSON.stringify(cur()));
+  updateThumb(state.cur+1); select(state.cur+1); toast(`${state.cur+1}番にコピーしました`);
+};
+let armed = 0;
+function clearArmed(){ clearTimeout(armed); armed = 0; $('#clear').textContent = '白紙に戻す'; }
+$('#clear').onclick = () => {
+  if(!armed){ $('#clear').textContent = 'もう一度押すと消えます'; armed = setTimeout(clearArmed, 3000); return; }
+  clearArmed(); state.stickers[state.cur] = blank(); syncControls(); drawStage(); save(); toast('白紙に戻しました');
+};
+
+// set settings
+$('#count').value = state.count;
+$('#count').onchange = e => { state.count = +e.target.value; state.main = Math.min(state.main, state.count-1); state.tab = Math.min(state.tab, state.count-1); buildThumbs(); select(Math.min(state.cur, state.count-1)); };
+$('#mainIdx').onchange = e => { state.main = +e.target.value; buildThumbs(); save(); };
+$('#tabIdx').onchange = e => { state.tab = +e.target.value; buildThumbs(); save(); };
+$('#trim').checked = state.trim;
+$('#trim').onchange = e => { state.trim = e.target.checked; refreshAll(); save(); };
+
+// saving files
+const dlP = window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function saveFile(name, blob){
+  const dl = await Promise.race([dlP, new Promise(r => setTimeout(() => r(undefined), 1500))]);
+  if(dl){
+    try { await dl.save({filename:name, data:blob}); toast(`${name} を保存しました`); }
+    catch(e){ toast(e && e.code === 'declined' ? '保存をキャンセルしました' : e && e.code === 'rate_limited' ? '少し待ってからもう一度押してください' : 'この画面では保存できませんでした'); }
+    return;
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000); toast(`${name} を保存しました`);
+}
+$('#png1').onclick = async () => {
+  const c = exportSticker(cur()); if(!c){ toast('まだ何も描かれていません'); return; }
+  saveFile(`${String(state.cur+1).padStart(2,'0')}.png`, await toBlob(c));
+};
+$('#zip').onclick = async () => {
+  if(!window.JSZip){ toast('ZIP機能を読み込めませんでした。通信状況を確認して再読み込みしてください'); return; }
+  const empties = []; for(let i=0;i<state.count;i++) if(!bbox(render(state.stickers[i],1))) empties.push(i+1);
+  if(empties.length){ toast(`未作成のスタンプがあります：${empties.slice(0,6).join(', ')}${empties.length>6?' ほか':''}番`); select(empties[0]-1); return; }
+  const btn = $('#zip'); btn.disabled = true; btn.textContent = '作成中…';
+  try {
+    const zip = new JSZip();
+    for(let i=0;i<state.count;i++) zip.file(`${String(i+1).padStart(2,'0')}.png`, await toBlob(exportSticker(state.stickers[i])));
+    zip.file('main.png', await toBlob(fitInto(state.stickers[state.main], 240, 240, 10)));
+    zip.file('tab.png', await toBlob(fitInto(state.stickers[state.tab], 96, 74, 3)));
+    const blob = await zip.generateAsync({type:'blob'});
+    await saveFile('line-stamps.zip', blob);
+  } finally { btn.disabled = false; btn.textContent = 'ZIPで保存'; }
+};
+
+let tt = 0;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600); }
+
+// boot
+buildThumbs(); syncControls(); drawStage();
+state.stickers.slice(0, state.count).forEach(s => ensureFont(s.text));
+if(document.fonts) document.fonts.ready.then(refreshAll);
+})();
+</script>
