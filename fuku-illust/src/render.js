@@ -1,8 +1,8 @@
 // usage: node render.js <font.ttf> <outdir>
 const {chromium}=require('playwright'); const fs=require('fs'); const path=require('path');
 (async()=>{
-  const [font,out]=process.argv.slice(2); fs.mkdirSync(out,{recursive:true});
-  const html=fs.readFileSync(path.join(__dirname,'fuku.html'),'utf8').replace('FONT_URL','file://'+path.resolve(font));
+  const [font,out,page='fuku.html']=process.argv.slice(2); fs.mkdirSync(out,{recursive:true});
+  const html=fs.readFileSync(path.join(__dirname,page),'utf8').replace('FONT_URL','file://'+path.resolve(font));
   const tmp=path.join(out,'_page.html'); fs.writeFileSync(tmp,html);
   const b=await chromium.launch(); const p=await b.newPage({viewport:{width:1500,height:1300}});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));

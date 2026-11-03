@@ -1,0 +1,187 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+@font-face{font-family:"Pop";src:url("FONT_URL")}
+body{margin:0;background:transparent}
+svg{display:block}
+text{font-family:"Pop",sans-serif;paint-order:stroke;stroke-linejoin:round}
+</style>
+<div id="root"></div>
+<script>
+// Fuku v2: Maltese x Schnauzer, soft fluffy painted look
+const P = {
+  line:'#5b514b', gD:'#6f6964', g:'#9b958f', gL:'#c8c2bb', gXL:'#dcd7d0',
+  white:'#fbf8f3', cream:'#efe4d3', beige:'#dcc8ac', earIn:'#eeb7b0',
+  nose:'#231d1b', tongue:'#f08a98', blush:'#ff9fae', collar:'#f07c9c', tag:'#d6337a'
+};
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = rng(7);
+const rr = (a,b) => a + (b-a)*R();
+const pick = arr => arr[Math.floor(R()*arr.length)];
+
+// tapered fur strand (filled leaf)
+function strand(x,y,ang,len,w,col,op=1,curv=0.25){
+  const dx=Math.cos(ang), dy=Math.sin(ang), nx=-dy, ny=dx;
+  const ex=x+dx*len, ey=y+dy*len;
+  const bend = curv*len*(R()<.5?-1:1);
+  const cx=x+dx*len*.5+nx*bend, cy=y+dy*len*.5+ny*bend;
+  const lx=x+nx*w/2, ly=y+ny*w/2, rx=x-nx*w/2, ry=y-ny*w/2;
+  return `<path d="M${lx.toFixed(1)},${ly.toFixed(1)} Q${(cx+nx*w*.3).toFixed(1)},${(cy+ny*w*.3).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} Q${(cx-nx*w*.3).toFixed(1)},${(cy-ny*w*.3).toFixed(1)} ${rx.toFixed(1)},${ry.toFixed(1)}Z" fill="${col}" opacity="${op.toFixed(2)}"/>`;
+}
+// pencil hair line (thin stroke)
+function pencil(x,y,ang,len,col=P.line,op=.55,w=1.6){
+  const dx=Math.cos(ang), dy=Math.sin(ang), nx=-dy, ny=dx, b=len*rr(-.25,.25);
+  return `<path d="M${x.toFixed(1)},${y.toFixed(1)} Q${(x+dx*len*.5+nx*b).toFixed(1)},${(y+dy*len*.5+ny*b).toFixed(1)} ${(x+dx*len).toFixed(1)},${(y+dy*len).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>`;
+}
+// tufted silhouette around an ellipse; tufts point along local normal (biased by 'down')
+function tuftShape(cx,cy,rx,ry,n,amp,down=0,a0=0,a1=Math.PI*2){
+  let d='';
+  for(let i=0;i<=n;i++){
+    const a=a0+(a1-a0)*i/n, ca=Math.cos(a), sa=Math.sin(a);
+    const j=1+rr(-.02,.02);
+    const px=cx+ca*rx*j, py=cy+sa*ry*j;
+    if(i===0){ d+=`M${px.toFixed(1)},${py.toFixed(1)}`; continue; }
+    const am=a-(a1-a0)/n/2, ta=rr(.6,1.4)*amp;
+    const tx=cx+Math.cos(am)*rx*(1+ta), ty=cy+Math.sin(am)*ry*(1+ta)+down*Math.max(0,Math.sin(am))*ta*ry;
+    const bx=cx+Math.cos(am-.03)*rx, by=cy+Math.sin(am-.03)*ry;
+    d+=` Q${bx.toFixed(1)},${by.toFixed(1)} ${tx.toFixed(1)},${ty.toFixed(1)} Q${(cx+Math.cos(am+.03)*rx).toFixed(1)},${(cy+Math.sin(am+.03)*ry).toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)}`;
+  }
+  return d+'Z';
+}
+function scallop(cx,cy,rx,ry,n,amp){
+  let d='';
+  for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2, j=1+rr(-.015,.015); const x=cx+Math.cos(a)*rx*j, y=cy+Math.sin(a)*ry*j;
+    if(!i){ d+=`M${x.toFixed(1)},${y.toFixed(1)}`; continue; }
+    const am=(i-.5)/n*Math.PI*2, k=1+amp*rr(.6,1.4); d+=` Q${(cx+Math.cos(am)*rx*k).toFixed(1)},${(cy+Math.sin(am)*ry*k+Math.max(0,Math.sin(am))*amp*ry*.8).toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`; }
+  return d+'Z';
+}
+const inEll = (x,y,cx,cy,rx,ry) => ((x-cx)/rx)**2+((y-cy)/ry)**2 <= 1;
+
+function fuku(o={}){
+  R = rng(o.seed||7);
+  let s = `<defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="soft2" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="fur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".9"/></filter>
+    <filter id="soft1"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <radialGradient id="iris" cx=".5" cy=".7" r=".65"><stop offset="0" stop-color="#8a5532"/><stop offset=".45" stop-color="#4a2a1a"/><stop offset="1" stop-color="#160e0a"/></radialGradient>
+    <radialGradient id="blush" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${P.blush}" stop-opacity=".9"/><stop offset="1" stop-color="${P.blush}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ear" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${P.g}"/><stop offset=".7" stop-color="${P.gD}"/><stop offset="1" stop-color="#4e4844"/></linearGradient>
+    <linearGradient id="headg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f8983"/><stop offset=".5" stop-color="#aaa49d"/><stop offset="1" stop-color="#c7c0b8"/></linearGradient>
+  </defs>`;
+  const HX=370, HY=250, HRX=178, HRY=150;
+
+  // ---------- body / chest ----------
+  const body = scallop(HX,455,128,100,30,.07);
+  s += `<path d="${body}" fill="${P.gXL}" stroke="${P.line}" stroke-width="2" stroke-opacity=".35"/>`;
+  s += `<ellipse cx="${HX}" cy="470" rx="96" ry="76" fill="${P.white}" filter="url(#soft)"/>`;
+  s += `<g filter="url(#fur)">`;
+  for(let i=0;i<170;i++){ const x=rr(240,500), y=rr(360,555); if(!inEll(x,y,HX,455,124,96)) continue;
+    const a=Math.PI/2+(x-HX)/260+rr(-.25,.25); s+=strand(x,y,a,rr(14,26),rr(4,8),pick([P.white,P.cream,P.gXL,P.gL]),rr(.4,.8),.15); }
+  s += `</g>`;
+  // collar & tag
+  s += `<path d="M262,402 Q370,452 478,402 L484,426 Q370,480 256,426Z" fill="${P.collar}" stroke="${P.line}" stroke-width="3"/>`;
+  s += `<g transform="translate(370,468) rotate(-6)"><path d="M-26,-9 a10,10 0 1 1 5,-9 h42 a10,10 0 1 1 5,9 a10,10 0 1 1 -5,9 h-42 a10,10 0 1 1 -5,-9Z" fill="${P.tag}" stroke="${P.line}" stroke-width="3"/><text x="0" y="6" text-anchor="middle" font-size="18" fill="#fff">ふく</text></g>`;
+  // paws
+  for(const px of [312,428]){
+    s += `<path d="${tuftShape(px,548,50,30,26,.05,.2)}" fill="${P.white}" stroke="${P.gL}" stroke-width="2"/>`;
+    for(let i=0;i<26;i++){ const x=px+rr(-44,44), y=548+rr(-24,20); s+=strand(x,y,Math.PI/2+rr(-.5,.5),rr(8,14),rr(3,6),pick([P.white,P.gXL,P.cream]),.8); }
+    for(const t of [-18,0,18]) s += pencil(px+t,566,-Math.PI/2+rr(-.1,.1),16,P.line,.6,2);
+  }
+
+  // ---------- ears ----------
+  for(const sx of [-1,1]){
+    const g = `<g transform="translate(${HX+sx*118},${HY-108}) scale(${sx},1) rotate(${-14})">`;
+    let e = `<path d="M-52,40 Q-60,-50 -18,-112 Q8,-120 20,-108 Q52,-40 54,30Z" fill="url(#ear)"/>`;
+    e += `<path d="M-30,30 Q-36,-34 -12,-82 Q14,-40 26,24Z" fill="${P.earIn}" opacity=".9"/>`;
+    for(let i=0;i<34;i++){ const t=rr(0,1); const x=-50+t*30+rr(-3,3), y=40-t*145; e+=strand(x,y,Math.PI+rr(-.6,.3),rr(10,20),rr(2,4),pick([P.gD,P.g,'#4e4844']),.9); }
+    for(let i=0;i<34;i++){ const t=rr(0,1); const x=52-t*32+rr(-3,3), y=30-t*135; e+=strand(x,y,rr(-.3,.6),rr(10,20),rr(2,4),pick([P.gD,P.g]),.9); }
+    for(let i=0;i<22;i++){ const x=rr(-26,22), y=rr(-50,26); e+=strand(x,y,-Math.PI/2+rr(-.6,.6),rr(14,26),rr(1.5,3),pick([P.white,P.gXL,P.gL]),.85); }
+    e += `<path d="M-52,40 Q-60,-50 -18,-112 Q8,-120 20,-108" fill="none" stroke="${P.line}" stroke-width="2.5" opacity=".5"/>`;
+    s += g + e + '</g>';
+  }
+
+  // ---------- head base ----------
+  const head = scallop(HX,HY,HRX,HRY,40,.06);
+  s += `<path d="${head}" fill="url(#headg)" stroke="${P.line}" stroke-width="2.2" stroke-opacity=".35"/>`;
+  s += `<clipPath id="hc"><path d="${head}"/></clipPath><g clip-path="url(#hc)">
+    <ellipse cx="${HX}" cy="${HY-60}" rx="46" ry="110" fill="${P.gD}" opacity=".55" filter="url(#soft)"/>
+    <ellipse cx="${HX-150}" cy="${HY+60}" rx="70" ry="90" fill="${P.beige}" opacity=".45" filter="url(#soft)"/>
+    <ellipse cx="${HX+150}" cy="${HY+60}" rx="70" ry="90" fill="${P.beige}" opacity=".45" filter="url(#soft)"/>
+  </g>`;
+  // head fur strands (direction: radiating from forehead center, downward on cheeks)
+  s += `<g filter="url(#fur)">`;
+  for(let i=0;i<620;i++){
+    const x=rr(HX-HRX-10,HX+HRX+10), y=rr(HY-HRY-10,HY+HRY+10);
+    if(!inEll(x,y,HX,HY,HRX*1.04,HRY*1.04)) continue;
+    let a=Math.atan2(y-(HY-30),x-HX); a = Math.atan2(Math.sin(a)*.6+.55, Math.cos(a)*.6);
+    const dark = Math.abs(x-HX)<40 && y<HY ? 1 : 0;
+    const col = dark ? pick([P.gD,'#5f5a56',P.g]) : (y>HY+40 ? pick([P.gL,P.gXL,P.beige,P.cream]) : pick([P.g,P.gL,P.gD,P.gXL]));
+    s+=strand(x,y,a+rr(-.3,.3),rr(12,24),rr(4,8),col,rr(.35,.75),.15);
+  }
+  s += `</g>`;
+  // edge tufts
+  for(let i=0;i<120;i++){ const a=rr(0,Math.PI*2), x=HX+Math.cos(a)*HRX*rr(.94,1.02), y=HY+Math.sin(a)*HRY*rr(.94,1.02);
+    let d=Math.atan2(Math.sin(a)*.55+.6, Math.cos(a)*.75);
+    s+=strand(x,y,d+rr(-.25,.25),rr(10,20),rr(5,9),pick([P.g,P.gL,P.gXL]),rr(.55,.9),.12); }
+  // pencil wisps (like the portrait sketch)
+  for(let i=0;i<34;i++){ const a=rr(0,Math.PI*2), x=HX+Math.cos(a)*HRX*rr(.6,1.0), y=HY+Math.sin(a)*HRY*rr(.6,1.0);
+    if(Math.abs(x-HX)<150 && Math.abs(y-HY-20)<90) continue;
+    s+=pencil(x,y,Math.atan2(y-HY,x-HX)+rr(-.4,.4),rr(14,26),P.line,rr(.25,.5),1.4); }
+
+  // ---------- eyes ----------
+  const EY=HY+2, EX=78;
+  for(const sx of [-1,1]){
+    const ex=HX+sx*EX;
+    s += `<ellipse cx="${ex}" cy="${EY+2}" rx="50" ry="46" fill="${P.gD}" opacity=".35" filter="url(#soft2)"/>`;
+    s += `<ellipse cx="${ex}" cy="${EY}" rx="41" ry="43" fill="url(#iris)" stroke="#1a1210" stroke-width="3"/>`;
+    s += `<ellipse cx="${ex+sx*-2}" cy="${EY+20}" rx="20" ry="8" fill="#b07a4c" opacity=".55" filter="url(#soft1)"/>`;
+    s += `<ellipse cx="${ex+12}" cy="${EY-14}" rx="12" ry="11" fill="#fff"/><circle cx="${ex-13}" cy="${EY+12}" r="5" fill="#fff" opacity=".9"/><circle cx="${ex+16}" cy="${EY+10}" r="2.5" fill="#fff" opacity=".8"/>`;
+  }
+  // ---------- schnauzer eyebrows (white, fluffy, over the eyes) ----------
+  for(const sx of [-1,1]){
+    for(let i=0;i<70;i++){
+      const t=rr(0,1), bx=HX+sx*(26+t*92), by=HY-40-Math.sin(t*Math.PI)*16+rr(-8,8);
+      const a=(sx<0?Math.PI:0)+sx*rr(-.55,-.15)*(-1);
+      s+=strand(bx,by,(sx<0?Math.PI+0.35:-0.35)+rr(-.25,.25),rr(16,30),rr(5,9),pick([P.white,P.white,P.cream,P.gXL]),rr(.7,1),.18);
+    }
+  }
+  // ---------- muzzle & beard ----------
+  const MY=HY+92;
+  s += `<path d="${tuftShape(HX,MY,118,86,40,.12,1.4)}" fill="${P.white}" filter="url(#soft1)"/>`;
+  s += `<ellipse cx="${HX}" cy="${MY-40}" rx="40" ry="22" fill="${P.gL}" opacity=".6" filter="url(#soft2)"/>`;
+  for(let i=0;i<300;i++){
+    const x=rr(HX-125,HX+125), y=rr(MY-80,MY+95); if(!inEll(x,y,HX,MY,122,92)) continue;
+    const a=Math.PI/2+(x-HX)/150+rr(-.25,.25);
+    s+=strand(x,y,a,rr(14,28),rr(4,8),pick([P.white,P.white,P.cream,P.gXL,P.gL]),rr(.45,.9),.15);
+  }
+  for(let i=0;i<28;i++){ const x=rr(HX-100,HX+100), y=rr(MY-10,MY+80); s+=pencil(x,y,Math.PI/2+(x-HX)/160+rr(-.2,.2),rr(14,24),P.gD,rr(.25,.45),1.3); }
+  // beard tips spilling below the head
+  for(let i=0;i<60;i++){ const x=rr(HX-100,HX+100), y=MY+rr(60,90); s+=strand(x,y,Math.PI/2+(x-HX)/170+rr(-.2,.2),rr(12,22),rr(5,8),pick([P.white,P.cream,P.gXL]),.9,.12); }
+  // blush
+  for(const sx of [-1,1]) s += `<ellipse cx="${HX+sx*120}" cy="${HY+70}" rx="38" ry="22" fill="url(#blush)"/>`;
+  // nose
+  s += `<path d="M${HX-30},${HY+62} Q${HX},${HY+46} ${HX+30},${HY+62} Q${HX+30},${HY+90} ${HX},${HY+96} Q${HX-30},${HY+90} ${HX-30},${HY+62}Z" fill="${P.nose}"/>`;
+  s += `<ellipse cx="${HX-8}" cy="${HY+60}" rx="11" ry="5" fill="#fff" opacity=".55"/>`;
+  // mouth + tongue
+  if(o.mouth!=='closed'){
+    s += `<path d="M${HX-16},${HY+118} Q${HX-18},${HY+148} ${HX},${HY+150} Q${HX+18},${HY+148} ${HX+16},${HY+118}Z" fill="${P.tongue}" stroke="${P.line}" stroke-width="2.5"/>`;
+    s += `<path d="M${HX},${HY+124} V${HY+138}" stroke="#d4677a" stroke-width="2.5" stroke-linecap="round"/>`;
+  }
+  s += `<path d="M${HX},${HY+96} V${HY+110} M${HX-30},${HY+112} Q${HX-15},${HY+128} ${HX},${HY+110} Q${HX+15},${HY+128} ${HX+30},${HY+112}" fill="none" stroke="${P.line}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // a few beard strands over the mouth corners
+  for(let i=0;i<20;i++){ const sx=R()<.5?-1:1, x=HX+sx*rr(30,80), y=HY+rr(100,130); s+=strand(x,y,Math.PI/2+sx*rr(.2,.6),rr(14,24),rr(2.5,4),pick([P.white,P.cream]),.9); }
+  return s;
+}
+
+const T = (str, x, y, size, fill, rot=0) => {
+  const lines = str.split('\n'), lh = size*1.08, top = y - lh*(lines.length-1)/2;
+  return `<g transform="rotate(${rot} ${x} ${y})">` + lines.map((l,i)=>`<text x="${x}" y="${top+i*lh}" text-anchor="middle" dominant-baseline="central" font-size="${size}" fill="${fill}" stroke="#5b514b" stroke-width="${size*0.2}">${l}</text><text x="${x}" y="${top+i*lh}" text-anchor="middle" dominant-baseline="central" font-size="${size}" fill="${fill}" stroke="#fff" stroke-width="${size*0.1}">${l}</text>`).join('') + '</g>';
+};
+const heart = (x,y,s,c='#ff6f91',r=0) => `<path transform="translate(${x},${y}) rotate(${r}) scale(${s/20})" d="M0,18 C-28,-2 -22,-26 -8,-26 C-2,-26 0,-20 0,-18 C0,-20 2,-26 8,-26 C22,-26 28,-2 0,18Z" fill="${c}" stroke="#5b514b" stroke-width="${3*20/s}" stroke-linejoin="round"/>`;
+
+const SAMPLES = [
+  () => `<g transform="translate(48,-6) scale(.87)">${fuku()}</g>` + T('ありがとう',370,575,88,'#ff5c8a',-3) + heart(150,150,34,'#ff6f91',-14) + heart(600,130,30,'#ff6f91',14) + heart(640,240,20,'#ff9fb5',22),
+];
+document.getElementById('root').innerHTML = SAMPLES.map((f,i)=>`<svg id="s${i}" xmlns="http://www.w3.org/2000/svg" width="1480" height="1280" viewBox="0 0 740 640">${f()}</svg>`).join('');
+</script>
