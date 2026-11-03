@@ -10,3 +10,8 @@
 - 「ZIPで保存」で `01.png`〜, `main.png`(240×240), `tab.png`(96×74) を一括書き出し
 - 書き出したZIPは LINE Creators Market の「ZIPアップロード」で登録できます
 - 作業内容はブラウザに自動保存されます
+
+## 福 LINEスタンプ
+- `fuku-stamps/` … 写真版（16個＋main/tab、提出用ZIP）
+- `fuku-illust/` … イラスト版（16個＋main/tab、提出用ZIP）
+  - `src/fuku.html` がキャラクターの描画元。`node src/render.js <フォント.ttf> <出力先>` → `python3 src/finish.py <出力先> fuku-illust` で再生成できます（フォント：Mochiy Pop One）

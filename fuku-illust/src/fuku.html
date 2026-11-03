@@ -1,0 +1,163 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+@font-face{font-family:"Pop";src:url("FONT_URL")}
+body{margin:0;background:transparent}
+svg{display:block}
+text{font-family:"Pop",sans-serif;paint-order:stroke;stroke-linejoin:round}
+</style>
+<div id="root"></div>
+<script>
+// ===== palette =====
+const C = {
+  line:'#4a3a30', fawn:'#e2b98a', fawnD:'#c99a68', grey:'#a39d96', greyD:'#857f79',
+  white:'#fbf6ee', brow:'#f7ecdc', earIn:'#f3c3b5', nose:'#2e2622', tongue:'#f4889f',
+  collar:'#f27ba0', tag:'#d6337a', blush:'#ff9db4'
+};
+const LW = 6;
+const st = (fill, w=LW) => `fill="${fill}" stroke="${C.line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+
+// fuzzy closed shape around an ellipse
+function fuzz(cx, cy, rx, ry, n, amp, rot=0){
+  const pts = [];
+  for(let i=0;i<=n;i++){ const a = i/n*Math.PI*2 + rot; pts.push([cx+Math.cos(a)*rx, cy+Math.sin(a)*ry]); }
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for(let i=1;i<pts.length;i++){
+    const a = (i-0.5)/n*Math.PI*2 + rot;
+    const qx = cx+Math.cos(a)*rx*(1+amp), qy = cy+Math.sin(a)*ry*(1+amp);
+    d += ` Q${qx.toFixed(1)},${qy.toFixed(1)} ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+  }
+  return d + 'Z';
+}
+
+// ===== character =====
+// o: {eyes, mouth, ears, blush, brows, pose, tilt, tongue}
+let uid = 0;
+function fuku(o={}){
+  const id = 'h'+(uid++);
+  const eyes = o.eyes||'open', mouth = o.mouth||'tongue', ears = o.ears||'up', pose = o.pose||'sit';
+  let s = '';
+  // ---- body ----
+  if(pose !== 'head'){
+    s += `<path d="${fuzz(0,205,118,100,22,0.05)}" ${st(C.fawn)}/>`;
+    s += `<path d="${fuzz(0,215,62,66,14,0.07)}" fill="${C.white}"/>`;
+    // tail
+    s += `<path d="M92,238 Q178,236 172,160 Q168,122 136,134 Q128,150 146,160 Q150,196 96,206Z" ${st(C.grey)}/>`;
+    // collar + tag
+    s += `<path d="M-92,150 Q0,190 92,150 L96,172 Q0,214 -96,172Z" ${st(C.collar,5)}/>`;
+    s += `<g transform="translate(0,205)"><path d="M-30,-11 a12,12 0 1 1 6,-10 h48 a12,12 0 1 1 6,10 a12,12 0 1 1 -6,10 h-48 a12,12 0 1 1 -6,-10Z" ${st(C.tag,4)}/>
+          <text x="0" y="8" text-anchor="middle" font-size="22" fill="#fff" stroke="none">ふく</text></g>`;
+    // paws
+    if(pose==='sit' || pose==='wave'){
+      s += `<ellipse cx="-50" cy="292" rx="40" ry="26" ${st(C.white)}/>`;
+      if(pose==='sit') s += `<ellipse cx="50" cy="292" rx="40" ry="26" ${st(C.white)}/>`;
+    }
+  }
+  // ---- ears (behind head) ----
+  const ear = (sx) => {
+    const r = ears==='up' ? 0 : ears==='down' ? 62 : 30;
+    return `<g transform="translate(${sx*112},-78) rotate(${sx*r}) scale(${sx},1)">
+      <path d="M-38,20 Q-50,-95 -12,-150 Q40,-80 38,15Z" ${st(C.greyD)}/>
+      <path d="M-20,8 Q-28,-70 -8,-112 Q22,-60 20,5Z" fill="${C.earIn}"/></g>`;
+  };
+  s += ear(-1) + ear(1);
+  // ---- head ----
+  const head = fuzz(0,0,168,142,30,0.045);
+  s += `<defs><clipPath id="${id}"><path d="${head}"/></clipPath></defs>`;
+  s += `<path d="${head}" fill="${C.fawn}"/>`;
+  s += `<defs><linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="-150" x2="0" y2="-10">
+        <stop offset="0" stop-color="${C.greyD}"/><stop offset=".45" stop-color="${C.grey}"/><stop offset="1" stop-color="${C.grey}" stop-opacity="0"/></linearGradient></defs>
+        <g clip-path="url(#${id})"><rect x="-200" y="-160" width="400" height="160" fill="url(#${id}g)"/>
+        <path d="${fuzz(-150,40,40,60,10,0.08)}" fill="${C.fawnD}" opacity=".35"/><path d="${fuzz(150,40,40,60,10,0.08)}" fill="${C.fawnD}" opacity=".35"/></g>`;
+  s += `<path d="${head}" fill="none" stroke="${C.line}" stroke-width="${LW}" stroke-linejoin="round"/>`;
+  // terrier eyebrows
+  if(o.brows==='angry'){
+    s += `<path d="M-95,-58 L-35,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/><path d="M95,-58 L35,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/>`;
+  } else if(o.brows==='sad'){
+    s += `<path d="${fuzz(-62,-50,30,11,8,0.15,0.35)}" fill="${C.brow}" transform="rotate(-14 -62 -50)"/><path d="${fuzz(62,-50,30,11,8,0.15)}" fill="${C.brow}" transform="rotate(14 62 -50)"/>`;
+  } else {
+    s += `<path d="${fuzz(-62,-52,30,12,8,0.15)}" fill="${C.brow}"/><path d="${fuzz(62,-52,30,12,8,0.15)}" fill="${C.brow}"/>`;
+  }
+  // muzzle
+  s += `<path d="${fuzz(0,58,88,62,16,0.07)}" fill="${C.white}"/>`;
+  // blush
+  if(o.blush!==false) s += `<ellipse cx="-110" cy="42" rx="24" ry="13" fill="${C.blush}" opacity="${o.blush==='big'?0.95:0.6}"/><ellipse cx="110" cy="42" rx="24" ry="13" fill="${C.blush}" opacity="${o.blush==='big'?0.95:0.6}"/>`;
+  // eyes
+  const E = (x) => {
+    switch(eyes){
+      case 'happy': return `<path d="M${x-22},2 Q${x},-24 ${x+22},2" fill="none" stroke="${C.line}" stroke-width="8" stroke-linecap="round"/>`;
+      case 'closed': return `<path d="M${x-22},-4 Q${x},14 ${x+22},-4" fill="none" stroke="${C.line}" stroke-width="8" stroke-linecap="round"/>`;
+      case 'xx': { const sx = x<0?1:-1; return `<path d="M${x-18*sx},-18 L${x+16*sx},-4 L${x-18*sx},10" fill="none" stroke="${C.line}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>`; }
+      case 'wide': return `<ellipse cx="${x}" cy="-6" rx="24" ry="28" fill="#fff" stroke="${C.line}" stroke-width="5"/><circle cx="${x}" cy="-4" r="10" fill="${C.nose}"/>`;
+      case 'sparkle': return `<ellipse cx="${x}" cy="-6" rx="19" ry="23" fill="${C.nose}"/><circle cx="${x+6}" cy="-14" r="7" fill="#fff"/><circle cx="${x-7}" cy="3" r="3.5" fill="#fff"/><path d="M${x-3},-30 l3,-8 3,8 8,3 -8,3 -3,8 -3,-8 -8,-3Z" fill="#fff"/>`;
+      default: return `<ellipse cx="${x}" cy="-6" rx="18" ry="22" fill="${C.nose}"/><circle cx="${x+6}" cy="-14" r="6.5" fill="#fff"/><circle cx="${x-6}" cy="2" r="3" fill="#fff"/>`;
+    }
+  };
+  s += E(-62) + E(62);
+  if(o.tears) s += `<path d="M-70,16 Q-84,40 -72,48 Q-58,42 -70,16Z" fill="#7cc4f2" stroke="${C.line}" stroke-width="3"/>`;
+  if(o.cry) s += `<path d="M-80,10 Q-90,70 -78,130" fill="none" stroke="#7cc4f2" stroke-width="16" stroke-linecap="round" opacity=".9"/><path d="M80,10 Q90,70 78,130" fill="none" stroke="#7cc4f2" stroke-width="16" stroke-linecap="round" opacity=".9"/>`;
+  // nose
+  s += `<path d="M-24,22 Q0,10 24,22 Q22,44 0,48 Q-22,44 -24,22Z" fill="${C.nose}"/><ellipse cx="-7" cy="22" rx="8" ry="4" fill="#fff" opacity=".7"/>`;
+  // mouth
+  const w = `<path d="M0,48 L0,58 M-30,60 Q-15,78 0,58 Q15,78 30,60" fill="none" stroke="${C.line}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  switch(mouth){
+    case 'tongue': s += `<path d="M-15,66 Q-18,112 0,114 Q18,112 15,66Z" ${st(C.tongue,4.5)}/><path d="M0,72 L0,98" stroke="#d9637f" stroke-width="3.5" stroke-linecap="round"/>` + w; break;
+    case 'open': s += `<path d="M-30,60 Q0,62 30,60 Q24,108 0,110 Q-24,108 -30,60Z" ${st('#9b3b4a',4.5)}/><path d="M-14,94 Q0,82 14,94 Q12,108 0,108 Q-12,108 -14,94Z" fill="${C.tongue}"/>` + `<path d="M0,48 L0,58" stroke="${C.line}" stroke-width="5"/>`; break;
+    case 'o': s += `<path d="M0,48 L0,58" stroke="${C.line}" stroke-width="5"/><ellipse cx="0" cy="82" rx="15" ry="19" ${st('#9b3b4a',4.5)}/>`; break;
+    case 'frown': s += `<path d="M0,48 L0,58 M-24,80 Q0,60 24,80" fill="none" stroke="${C.line}" stroke-width="5" stroke-linecap="round"/>`; break;
+    case 'pout': s += `<path d="M0,48 L0,60 M-14,74 Q0,64 14,74" fill="none" stroke="${C.line}" stroke-width="5" stroke-linecap="round"/>`; break;
+    case 'drool': s += w + `<path d="M24,68 Q28,96 22,104 Q14,96 24,68Z" fill="#bfe6ff" stroke="${C.line}" stroke-width="3"/>`; break;
+    default: s += w;
+  }
+  // raised paw (wave / cheer)
+  if(pose==='wave') s += `<g transform="translate(150,105) rotate(-25)"><path d="M-30,80 Q-36,10 0,-30 Q36,10 30,80Z" ${st(C.fawn)}/><ellipse cx="0" cy="-30" rx="36" ry="30" ${st(C.white)}/>
+      <path d="M-14,-46 v14 M0,-50 v16 M14,-46 v14" stroke="${C.line}" stroke-width="4" stroke-linecap="round"/></g>`;
+  return s;
+}
+const char = (o, x, y, sc=1, rot=0) => `<g transform="translate(${x},${y}) rotate(${rot}) scale(${sc})">${fuku(o)}</g>`;
+
+// ===== props =====
+const heart = (x,y,s,c='#ff5c8a',r=0) => `<path transform="translate(${x},${y}) rotate(${r}) scale(${s/20})" d="M0,18 C-28,-2 -22,-26 -8,-26 C-2,-26 0,-20 0,-18 C0,-20 2,-26 8,-26 C22,-26 28,-2 0,18Z" fill="${c}" stroke="${C.line}" stroke-width="${4*20/s}" stroke-linejoin="round"/>`;
+const sparkle = (x,y,r,c='#ffcc1f') => `<path transform="translate(${x},${y})" d="M0,${-r} Q${r*.18},${-r*.18} ${r},0 Q${r*.18},${r*.18} 0,${r} Q${-r*.18},${r*.18} ${-r},0 Q${-r*.18},${-r*.18} 0,${-r}Z" fill="${c}" stroke="${C.line}" stroke-width="4" stroke-linejoin="round"/>`;
+const drop = (x,y,s=1,c='#7cc4f2') => `<path transform="translate(${x},${y}) scale(${s})" d="M0,-30 Q22,0 18,12 Q12,26 0,26 Q-12,26 -18,12 Q-22,0 0,-30Z" fill="${c}" stroke="${C.line}" stroke-width="${4/s}"/>`;
+const anger = (x,y,s=1) => `<g transform="translate(${x},${y}) scale(${s})" fill="none" stroke="#f0473f" stroke-width="9" stroke-linecap="round">
+  <path d="M-30,-8 Q-12,-10 -10,-30"/><path d="M8,-30 Q10,-12 30,-8"/><path d="M30,10 Q12,12 10,30"/><path d="M-10,30 Q-12,12 -30,10"/></g>`;
+const shock = (x,y,r,angles,c=C.line) => angles.map(a=>{const t=a*Math.PI/180;return `<path d="M${x+Math.cos(t)*r},${y+Math.sin(t)*r} L${x+Math.cos(t)*(r+40)},${y+Math.sin(t)*(r+40)}" stroke="${c}" stroke-width="8" stroke-linecap="round"/>`}).join('');
+const moon = (x,y,r) => `<path transform="translate(${x},${y})" d="M${r*.2},${-r} A${r},${r} 0 1 0 ${r*.95},${r*.35} A${r*.78},${r*.78} 0 0 1 ${r*.2},${-r}Z" fill="#ffd54a" stroke="${C.line}" stroke-width="5" stroke-linejoin="round"/>`;
+const sun = (x,y,r) => `<g transform="translate(${x},${y})">${[...Array(8)].map((_,i)=>{const t=i*Math.PI/4;return `<path d="M${Math.cos(t)*(r+10)},${Math.sin(t)*(r+10)} L${Math.cos(t)*(r+30)},${Math.sin(t)*(r+30)}" stroke="#ff9f1c" stroke-width="9" stroke-linecap="round"/>`}).join('')}<circle r="${r}" fill="#ffcf3a" stroke="${C.line}" stroke-width="5"/></g>`;
+const nightcap = (x,y,s=1) => `<g transform="translate(${x},${y}) scale(${s}) rotate(-12)"><path d="M-120,0 Q-40,-170 120,-120 Q150,-40 120,0Z" ${st('#6f8de8')}/><path d="M-100,-40 Q0,-110 110,-90" fill="none" stroke="#fff" stroke-width="10" stroke-dasharray="4 26" stroke-linecap="round"/><path d="M-130,6 Q0,-24 132,6 L130,26 Q0,-4 -128,26Z" ${st('#fff',5)}/><circle cx="150" cy="-110" r="28" ${st('#fff',5)}/></g>`;
+const partyhat = (x,y,s=1) => `<g transform="translate(${x},${y}) scale(${s}) rotate(14)"><path d="M-60,0 L0,-150 L60,0Z" ${st('#ffcf3a')}/><path d="M-36,-60 L36,-60 M-18,-110 L18,-110 M-50,-24 L50,-24" stroke="#ff5c8a" stroke-width="10"/><circle cx="0" cy="-155" r="18" ${st('#ff5c8a',5)}/></g>`;
+const confetti = (pts) => pts.map(([x,y,c,r])=>`<rect x="${x}" y="${y}" width="16" height="26" rx="4" fill="${c}" stroke="${C.line}" stroke-width="3" transform="rotate(${r} ${x} ${y})"/>`).join('');
+const bowl = (x,y,s=1) => `<g transform="translate(${x},${y}) scale(${s})"><path d="M-80,-10 Q-80,50 -40,60 L40,60 Q80,50 80,-10Z" ${st('#ff8a5c')}/>${[[-40,-18],[-14,-26],[12,-20],[38,-24],[-26,-34],[2,-38],[26,-36]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="13" ${st('#b7703d',3.5)}/>`).join('')}<path d="M-86,-12 Q0,6 86,-12" fill="none" stroke="${C.line}" stroke-width="6" stroke-linecap="round"/><text x="0" y="44" text-anchor="middle" font-size="26" fill="#fff" stroke="none">FUKU</text></g>`;
+const note = (x,y,s=1,c='#5aa9e6') => `<g transform="translate(${x},${y}) scale(${s})"><path d="M0,0 V-60 L36,-70 V-14" fill="none" stroke="${C.line}" stroke-width="7" stroke-linejoin="round"/><ellipse cx="-10" cy="2" rx="14" ry="11" fill="${c}" stroke="${C.line}" stroke-width="5"/><ellipse cx="26" cy="-12" rx="14" ry="11" fill="${c}" stroke="${C.line}" stroke-width="5"/></g>`;
+const flag = (x,y,s=1) => `<g transform="translate(${x},${y}) scale(${s}) rotate(18)"><path d="M0,0 V-170" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/><path d="M4,-168 L110,-140 L4,-104Z" ${st('#ff5c8a')}/><circle cx="0" cy="-174" r="10" ${st('#ffcf3a',4)}/></g>`;
+const leash = (x,y,s=1) => `<g transform="translate(${x},${y}) scale(${s})"><path d="M0,0 Q60,-30 90,30 Q120,90 70,120" fill="none" stroke="${C.line}" stroke-width="20" stroke-linecap="round"/><path d="M0,0 Q60,-30 90,30 Q120,90 70,120" fill="none" stroke="#ff7aa2" stroke-width="12" stroke-linecap="round"/><circle cx="70" cy="132" r="22" fill="none" stroke="${C.line}" stroke-width="9"/></g>`;
+const paw = (x,y,s=1,c='#c99a68') => `<g transform="translate(${x},${y}) scale(${s}) rotate(-15)" fill="${c}" stroke="${C.line}" stroke-width="4"><ellipse cx="0" cy="14" rx="30" ry="24"/><ellipse cx="-30" cy="-18" rx="11" ry="14"/><ellipse cx="-10" cy="-32" rx="11" ry="14"/><ellipse cx="12" cy="-32" rx="11" ry="14"/><ellipse cx="31" cy="-18" rx="11" ry="14"/></g>`;
+const T = (str, x, y, size, fill, rot=0, extra='') => {
+  const lines = str.split('\n'), lh = size*1.08, top = y - lh*(lines.length-1)/2;
+  return `<g transform="rotate(${rot} ${x} ${y})">` + lines.map((l,i)=>`<text x="${x}" y="${top+i*lh}" text-anchor="middle" dominant-baseline="central" font-size="${size}" fill="${fill}" stroke="${C.line}" stroke-width="${size*0.2}" ${extra}>${l}</text><text x="${x}" y="${top+i*lh}" text-anchor="middle" dominant-baseline="central" font-size="${size}" fill="${fill}" stroke="#fff" stroke-width="${size*0.1}">${l}</text>`).join('') + '</g>';
+};
+
+// ===== sticker set (canvas 740x640, safe area handled later) =====
+const S = [
+ /*01*/ ()=> sun(120,120,46) + char({eyes:'happy',mouth:'tongue',pose:'wave'},430,270,0.98) + T('おはよ〜',190,540,104,'#ff8a1f',-6),
+ /*02*/ ()=> char({eyes:'happy',mouth:'tongue',blush:'big'},370,250,0.98) + heart(110,120,38,'#ff5c8a',-15)+heart(640,110,30,'#ff8fb1',12)+heart(650,250,22,'#ff5c8a',20) + T('ありがとう！',370,555,96,'#ff5c8a'),
+ /*03*/ ()=> char({eyes:'sparkle',mouth:'tongue',pose:'wave'},270,270,0.95) + T('りょ！',580,330,150,'#1fb07c',-8) + sparkle(620,130,30),
+ /*04*/ ()=> char({eyes:'closed',mouth:'w'},370,250,0.86) + T('おつかれさま',370,585,88,'#7a5bd6') + sparkle(600,110,26,'#b9a4ff') + sparkle(150,150,18,'#b9a4ff'),
+ /*05*/ ()=> char({eyes:'open',mouth:'frown',ears:'down',brows:'sad',tears:true},370,260,0.86,-6) + drop(560,110,1.1) + drop(605,190,.8) + T('ごめんね…',370,590,96,'#3d78d8'),
+ /*06*/ ()=> char({eyes:'happy',mouth:'w',blush:'big'},300,270,0.98,6) + heart(560,140,62,'#ff4f86',12)+heart(660,250,34,'#ff8fb1',20)+heart(110,90,34,'#ff8fb1',-18) + T('すき',600,470,140,'#ff4f86',-8),
+ /*07*/ ()=> char({eyes:'closed',mouth:'w',ears:'side',blush:true},370,265,0.84) + nightcap(360,165,0.82) + moon(110,130,58) + T('Zzz',630,140,80,'#7b83d6',10) + T('おやすみ',370,600,96,'#3b3f8f'),
+ /*08*/ ()=> char({eyes:'wide',mouth:'o',blush:false},250,300,0.9) + shock(250,290,235,[-160,-130,-100,-75,-50]) + T('えっ！？',585,500,100,'#ff6a3d',-8),
+ /*09*/ ()=> char({eyes:'open',mouth:'pout',brows:'angry',blush:'big',ears:'side'},370,255,0.86) + anger(580,120,1.2) + T('ぷんぷん',370,590,100,'#f0473f'),
+ /*10*/ ()=> char({eyes:'xx',mouth:'open',cry:true,ears:'down',blush:false},370,260,0.98) + T('えーん',370,560,120,'#4a8fe0'),
+ /*11*/ ()=> char({eyes:'sparkle',mouth:'drool'},260,250,0.92) + bowl(580,500,1.1) + T('ごはん\nまだ？',590,200,92,'#c0662b',6),
+ /*12*/ ()=> char({eyes:'sparkle',mouth:'open',pose:'wave',blush:'big'},240,290,0.9) + paw(560,520,1) + paw(650,420,.8) + T('おさんぽ\nいく！',590,190,86,'#2f9e44',-6) + note(90,120,1),
+ /*13*/ ()=> `<g>${char({eyes:'open',mouth:'w',pose:'head'},430,440,1.05,-14)}</g><path d="M40,190 H300 Q330,190 330,220 V640 H40Z" fill="#cfe6f7" stroke="${C.line}" stroke-width="7" stroke-linejoin="round"/><path d="M40,330 H330 M40,470 H330 M185,190 V330 M110,330 V470 M260,330 V470 M185,470 V640" stroke="#a9cbe5" stroke-width="6"/>` + T('ちらっ',220,100,110,'#ff7a2f',-6),
+ /*14*/ ()=> char({eyes:'happy',mouth:'open',pose:'wave',blush:'big'},300,270,0.95) + flag(570,560,1.4) + T('がんばって！',370,90,92,'#ff4f86',-4),
+ /*15*/ ()=> char({eyes:'happy',mouth:'open',blush:'big'},370,300,0.92) + partyhat(395,175,0.85) + confetti([[90,120,'#ff5c8a',20],[150,260,'#ffcf3a',-30],[630,140,'#5aa9e6',35],[600,300,'#8fd16a',-10],[100,380,'#5aa9e6',50],[660,420,'#ff5c8a',15]]) + T('おめでとう！',370,575,92,'#ff8a1f'),
+ /*16*/ ()=> char({eyes:'happy',mouth:'tongue',pose:'wave'},480,270,0.92,-4) + T('またね〜',170,320,96,'#4a7fe0',8) + sparkle(120,110,26,'#9cc1ff') + sparkle(160,500,20,'#9cc1ff'),
+ /*main*/ ()=> char({eyes:'open',mouth:'tongue'},370,300,1),
+ /*tab*/ ()=> char({eyes:'open',mouth:'tongue',pose:'head'},370,320,1.25),
+];
+document.getElementById('root').innerHTML = S.map((f,i)=>`<svg id="s${i}" xmlns="http://www.w3.org/2000/svg" width="1480" height="1280" viewBox="-370 -320 1480 1280">${f()}</svg>`).join('');
+</script>
