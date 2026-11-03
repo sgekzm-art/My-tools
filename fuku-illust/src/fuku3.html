@@ -1,0 +1,157 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+@font-face{font-family:"Pop";src:url("FONT_URL")}
+body{margin:0;background:transparent}
+svg{display:block}
+text{font-family:"Pop",sans-serif;paint-order:stroke;stroke-linejoin:round}
+</style>
+<div id="root"></div>
+<script>
+// Fuku v2: Maltese x Schnauzer, soft fluffy painted look
+const P = {
+  line:'#5b514b', gD:'#6f6964', g:'#9b958f', gL:'#c8c2bb', gXL:'#dcd7d0',
+  white:'#fbf8f3', cream:'#efe4d3', beige:'#dcc8ac', earIn:'#eeb7b0',
+  nose:'#231d1b', tongue:'#f08a98', blush:'#ff9fae', collar:'#f07c9c', tag:'#d6337a'
+};
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = rng(7);
+const rr = (a,b) => a + (b-a)*R();
+const pick = arr => arr[Math.floor(R()*arr.length)];
+
+// tapered fur strand (filled leaf)
+function strand(x,y,ang,len,w,col,op=1,curv=0.25){
+  const dx=Math.cos(ang), dy=Math.sin(ang), nx=-dy, ny=dx;
+  const ex=x+dx*len, ey=y+dy*len;
+  const bend = curv*len*(R()<.5?-1:1);
+  const cx=x+dx*len*.5+nx*bend, cy=y+dy*len*.5+ny*bend;
+  const lx=x+nx*w/2, ly=y+ny*w/2, rx=x-nx*w/2, ry=y-ny*w/2;
+  return `<path d="M${lx.toFixed(1)},${ly.toFixed(1)} Q${(cx+nx*w*.3).toFixed(1)},${(cy+ny*w*.3).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} Q${(cx-nx*w*.3).toFixed(1)},${(cy-ny*w*.3).toFixed(1)} ${rx.toFixed(1)},${ry.toFixed(1)}Z" fill="${col}" opacity="${op.toFixed(2)}"/>`;
+}
+// pencil hair line (thin stroke)
+function pencil(x,y,ang,len,col=P.line,op=.55,w=1.6){
+  const dx=Math.cos(ang), dy=Math.sin(ang), nx=-dy, ny=dx, b=len*rr(-.25,.25);
+  return `<path d="M${x.toFixed(1)},${y.toFixed(1)} Q${(x+dx*len*.5+nx*b).toFixed(1)},${(y+dy*len*.5+ny*b).toFixed(1)} ${(x+dx*len).toFixed(1)},${(y+dy*len).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>`;
+}
+// tufted silhouette around an ellipse; tufts point along local normal (biased by 'down')
+function tuftShape(cx,cy,rx,ry,n,amp,down=0,a0=0,a1=Math.PI*2){
+  let d='';
+  for(let i=0;i<=n;i++){
+    const a=a0+(a1-a0)*i/n, ca=Math.cos(a), sa=Math.sin(a);
+    const j=1+rr(-.02,.02);
+    const px=cx+ca*rx*j, py=cy+sa*ry*j;
+    if(i===0){ d+=`M${px.toFixed(1)},${py.toFixed(1)}`; continue; }
+    const am=a-(a1-a0)/n/2, ta=rr(.6,1.4)*amp;
+    const tx=cx+Math.cos(am)*rx*(1+ta), ty=cy+Math.sin(am)*ry*(1+ta)+down*Math.max(0,Math.sin(am))*ta*ry;
+    const bx=cx+Math.cos(am-.03)*rx, by=cy+Math.sin(am-.03)*ry;
+    d+=` Q${bx.toFixed(1)},${by.toFixed(1)} ${tx.toFixed(1)},${ty.toFixed(1)} Q${(cx+Math.cos(am+.03)*rx).toFixed(1)},${(cy+Math.sin(am+.03)*ry).toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)}`;
+  }
+  return d+'Z';
+}
+function scallop(cx,cy,rx,ry,n,amp){
+  let d='';
+  for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2, j=1+rr(-.015,.015); const x=cx+Math.cos(a)*rx*j, y=cy+Math.sin(a)*ry*j;
+    if(!i){ d+=`M${x.toFixed(1)},${y.toFixed(1)}`; continue; }
+    const am=(i-.5)/n*Math.PI*2, k=1+amp*rr(.6,1.4); d+=` Q${(cx+Math.cos(am)*rx*k).toFixed(1)},${(cy+Math.sin(am)*ry*k+Math.max(0,Math.sin(am))*amp*ry*.8).toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`; }
+  return d+'Z';
+}
+const inEll = (x,y,cx,cy,rx,ry) => ((x-cx)/rx)**2+((y-cy)/ry)**2 <= 1;
+
+function fuku(o={}){
+  R = rng(o.seed||11);
+  const C3 = {grey:'#9a948e', greyD:'#77716c', fawn:'#d8bf9c', fawnL:'#e8d6bc', white:'#fbf8f3', brow:'#ece0cc'};
+  let s = `<defs>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="soft2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="fur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".7"/></filter>
+    <radialGradient id="iris" cx=".5" cy=".68" r=".65"><stop offset="0" stop-color="#7a4a2c"/><stop offset=".45" stop-color="#3e2418"/><stop offset="1" stop-color="#150e0a"/></radialGradient>
+    <radialGradient id="blush" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${P.blush}" stop-opacity=".85"/><stop offset="1" stop-color="${P.blush}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="earg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${C3.grey}"/><stop offset="1" stop-color="${C3.greyD}"/></linearGradient>
+  </defs>`;
+  const L = P.line;
+  // ---------- body (slim, sitting up, white front legs) ----------
+  s += `<path d="M302,384 C254,418 246,500 266,552 C284,592 456,592 474,552 C494,500 486,418 438,384Z" fill="${C3.fawn}" stroke="${L}" stroke-width="3" stroke-opacity=".5"/>`;
+  s += `<ellipse cx="370" cy="455" rx="66" ry="70" fill="${C3.white}" filter="url(#soft2)"/>`;
+  for(const lx of [322,418]){
+    s += `<path d="M${lx-22},480 C${lx-26},530 ${lx-24},560 ${lx-30},578 C${lx-36},600 ${lx+36},600 ${lx+30},578 C${lx+24},560 ${lx+26},530 ${lx+22},480Z" fill="${C3.white}" stroke="${L}" stroke-width="3" stroke-opacity=".5" stroke-linejoin="round"/>`;
+    for(const t of [-11,0,11]) s += pencil(lx+t,594,-Math.PI/2,12,L,.55,2);
+  }
+  s += `<g filter="url(#fur)">`;
+  for(let i=0;i<70;i++){ const x=rr(270,470), y=rr(400,540); s+=strand(x,y,Math.PI/2+(x-370)/300+rr(-.2,.2),rr(10,18),rr(3,6),pick([C3.fawnL,C3.white,C3.fawn]),rr(.4,.7),.12); }
+  s += `</g>`;
+  // collar + tag
+  s += `<path d="M282,388 Q370,432 458,388 L462,410 Q370,456 278,410Z" fill="#f1a6bd" stroke="${L}" stroke-width="3"/>`;
+  s += `<g transform="translate(372,450) rotate(-8)"><path d="M-26,-9 a10,10 0 1 1 5,-9 h42 a10,10 0 1 1 5,9 a10,10 0 1 1 -5,9 h-42 a10,10 0 1 1 -5,-9Z" fill="${P.tag}" stroke="${L}" stroke-width="3"/><text x="0" y="6" text-anchor="middle" font-size="18" fill="#fff">ふく</text></g>`;
+
+  // ---------- ears: set at the sides, angled outward, rounded tips ----------
+  for(const sx of [-1,1]){
+    const e = (pts) => pts.map(([x,y])=>[370+sx*(x-370),y]);
+    const q = (arr) => e(arr).map(p=>p.join(',')).join(' ');
+    s += `<path d="M${q([[238,218]])} C${q([[204,176],[186,110],[198,74]])} C${q([[212,58],[240,62],[260,80]])} C${q([[290,104],[310,122],[324,142]])}Z" fill="url(#earg)" stroke="${L}" stroke-width="3" stroke-opacity=".6" stroke-linejoin="round"/>`;
+    s += `<path d="M${q([[250,196]])} C${q([[226,166],[214,120],[222,92]])} C${q([[232,82],[246,86],[260,100]])} C${q([[282,120],[296,136],[306,150]])}Z" fill="#ead2c8"/>`;
+    for(let i=0;i<16;i++){ const t=rr(0,1); const x=370+sx*(370-(258+t*44)), y=150-t*40+rr(-30,30); s+=strand(x,y,-Math.PI/2-sx*rr(.3,.9),rr(14,26),rr(2,3.5),pick([C3.white,'#efe8df','#d9d2ca']),.9,.25); }
+    for(let i=0;i<10;i++){ const x=370+sx*(370-rr(250,285)), y=rr(115,170); s+=strand(x,y,-Math.PI/2+sx*rr(.1,.6),rr(12,22),rr(2,3.5),pick([C3.white,'#e8e2da']),.85,.2); }
+  }
+
+  // ---------- head: wide forehead, tapering to the chin ----------
+  const head = `M226,232 C220,160 286,110 370,108 C454,110 520,160 514,232 C510,292 472,340 434,368 C412,384 392,394 370,396 C348,394 328,384 306,368 C268,340 230,292 226,232Z`;
+  s += `<path d="${head}" fill="${C3.fawn}"/>`;
+  s += `<clipPath id="hc"><path d="${head}"/></clipPath><g clip-path="url(#hc)">
+    <ellipse cx="370" cy="140" rx="170" ry="90" fill="${C3.grey}" filter="url(#soft)"/>
+    <ellipse cx="370" cy="190" rx="40" ry="70" fill="${C3.greyD}" opacity=".5" filter="url(#soft)"/>
+    <ellipse cx="300" cy="235" rx="58" ry="46" fill="${C3.grey}" opacity=".75" filter="url(#soft)"/>
+    <ellipse cx="440" cy="235" rx="58" ry="46" fill="${C3.grey}" opacity=".75" filter="url(#soft)"/>
+    <ellipse cx="370" cy="335" rx="112" ry="80" fill="${C3.white}" filter="url(#soft2)"/>
+    <ellipse cx="370" cy="262" rx="30" ry="50" fill="${C3.fawnL}" filter="url(#soft2)"/>
+  </g>`;
+  // short scruffy fur inside the head
+  s += `<g filter="url(#fur)" clip-path="url(#hc)">`;
+  for(let i=0;i<260;i++){ const x=rr(226,514), y=rr(114,398); if(y>300 && Math.abs(x-370)<60) continue;
+    const a=Math.atan2(y-210,x-370)*.5+Math.PI/2*.5;
+    const col = y<190 ? pick([C3.grey,C3.greyD,'#b3ada6']) : (Math.abs(x-370)<110 && y>290 ? pick([C3.white,'#efe9e0']) : pick([C3.fawn,C3.fawnL,C3.grey,'#c9b49a']));
+    s+=strand(x,y,a+rr(-.3,.3),rr(8,15),rr(3,5),col,y<200?rr(.5,.85):rr(.3,.6),.12); }
+  for(let i=0;i<70;i++){ const x=rr(250,490), y=rr(120,200); s+=strand(x,y,Math.atan2(y-210,x-370)*.5+Math.PI/4+rr(-.3,.3),rr(6,12),rr(2,3),pick(['#e9e4dd','#5f5a56']),rr(.5,.8),.12); }
+  s += `</g>`;
+  s += `<path d="${head}" fill="none" stroke="${L}" stroke-width="3" stroke-opacity=".55"/>`;
+  // scruffy wisps on the outline
+  for(let i=0;i<60;i++){ const t=rr(0,1); const a=Math.PI*(1+t*1.0); // upper half
+    const x=370+Math.cos(a)*144, y=232+Math.sin(a)*122; if(y>250) continue;
+    s+=strand(x,y,a+rr(-.3,.3),rr(6,12),rr(2,4),pick([C3.grey,'#b3ada6',C3.fawnL]),.85,.25); }
+  for(const sx of [-1,1]) for(let i=0;i<14;i++){ const y=rr(250,350), x=370+sx*(140-(y-250)*.7)+rr(-4,4); s+=strand(x,y,Math.PI/2+sx*rr(.5,1.1),rr(8,16),rr(2.5,4),pick([C3.fawnL,C3.white,C3.fawn]),.9,.2); }
+
+  for(const sx of [-1,1]) for(let i=0;i<22;i++){ const y=rr(250,345), x=370+sx*(142-(y-250)*.62); s+=strand(x,y,Math.PI/2+sx*rr(.7,1.3),rr(10,20),rr(4,7),pick([C3.white,C3.fawnL,'#efe9e0']),.95,.2); }
+  // ---------- soft beige eyebrows (gentle ハの字) ----------
+  for(const sx of [-1,1]) s += `<ellipse cx="${370+sx*66}" cy="194" rx="34" ry="14" fill="#f5ecdd" transform="rotate(${sx*8} ${370+sx*68} 196)" filter="url(#soft2)" opacity=".95"/>`;
+  // ---------- eyes ----------
+  const eyes = o.eyes||'open';
+  for(const sx of [-1,1]){
+    const ex=370+sx*66, ey=238;
+    if(eyes==='happy'){ s += `<path d="M${ex-24},${ey+4} Q${ex},${ey-22} ${ex+24},${ey+4}" fill="none" stroke="${P.nose}" stroke-width="8" stroke-linecap="round"/>`; continue; }
+    s += `<ellipse cx="${ex}" cy="${ey}" rx="28" ry="30" fill="url(#iris)" stroke="#1a1210" stroke-width="3"/>`;
+    s += `<ellipse cx="${ex+9}" cy="${ey-10}" rx="9" ry="8.5" fill="#fff"/><circle cx="${ex-9}" cy="${ey+9}" r="4" fill="#fff" opacity=".9"/><circle cx="${ex+14}" cy="${ey+9}" r="2.2" fill="#fff" opacity=".8"/>`;
+  }
+  // blush
+  for(const sx of [-1,1]) s += `<ellipse cx="${370+sx*100}" cy="${300}" rx="30" ry="17" fill="url(#blush)"/>`;
+  // ---------- nose ----------
+  s += `<path d="M336,282 Q370,266 404,282 Q406,308 370,316 Q334,308 336,282Z" fill="${P.nose}"/><ellipse cx="358" cy="280" rx="12" ry="5.5" fill="#fff" opacity=".5"/>`;
+  // ---------- big open smile with tongue ----------
+  s += `<path d="M370,316 V326" stroke="${L}" stroke-width="4" stroke-linecap="round"/>`;
+  s += `<path d="M312,322 Q340,334 370,326 Q400,334 428,322 Q420,374 370,380 Q320,374 312,322Z" fill="#7a2f3a" stroke="${L}" stroke-width="4" stroke-linejoin="round"/>`;
+  s += `<path d="M338,346 Q334,404 370,408 Q406,404 402,346 Q370,360 338,346Z" fill="${P.tongue}" stroke="${L}" stroke-width="3.5" stroke-linejoin="round"/>`;
+  s += `<path d="M370,358 V390" stroke="#d4677a" stroke-width="3" stroke-linecap="round"/>`;
+  // whiskers / beard wisps (light, short)
+  for(const sx of [-1,1]) for(let i=0;i<5;i++) s += pencil(370+sx*rr(50,80), rr(300,330), (sx<0?Math.PI:0)+sx*rr(-.5,.1), rr(22,36), '#8c857e', .5, 1.4);
+  return s;
+}
+
+const T = (str, x, y, size, fill, rot=0) => {
+  const lines = str.split('\n'), lh = size*1.08, top = y - lh*(lines.length-1)/2;
+  return `<g transform="rotate(${rot} ${x} ${y})">` + lines.map((l,i)=>`<text x="${x}" y="${top+i*lh}" text-anchor="middle" dominant-baseline="central" font-size="${size}" fill="${fill}" stroke="#5b514b" stroke-width="${size*0.2}">${l}</text><text x="${x}" y="${top+i*lh}" text-anchor="middle" dominant-baseline="central" font-size="${size}" fill="${fill}" stroke="#fff" stroke-width="${size*0.1}">${l}</text>`).join('') + '</g>';
+};
+const heart = (x,y,s,c='#ff6f91',r=0) => `<path transform="translate(${x},${y}) rotate(${r}) scale(${s/20})" d="M0,18 C-28,-2 -22,-26 -8,-26 C-2,-26 0,-20 0,-18 C0,-20 2,-26 8,-26 C22,-26 28,-2 0,18Z" fill="${c}" stroke="#5b514b" stroke-width="${3*20/s}" stroke-linejoin="round"/>`;
+
+const SAMPLES = [
+  () => `<g transform="translate(40,-14) scale(.9)">${fuku()}</g>` + T('ありがとう',370,585,84,'#ff5c8a',-3) + heart(150,150,34,'#ff6f91',-14) + heart(600,130,30,'#ff6f91',14) + heart(640,240,20,'#ff9fb5',22),
+];
+document.getElementById('root').innerHTML = SAMPLES.map((f,i)=>`<svg id="s${i}" xmlns="http://www.w3.org/2000/svg" width="1480" height="1280" viewBox="0 0 740 640">${f()}</svg>`).join('');
+</script>
