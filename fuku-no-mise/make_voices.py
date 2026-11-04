@@ -271,8 +271,11 @@ def main() -> None:
             except Exception as e:
                 msg = str(e)
                 retry = attempt < 2 and re.search(r"429|500|503|RESOURCE_EXHAUSTED|UNAVAILABLE", msg)
+                m = re.search(r"retry in ([0-9.]+)s", msg)
+                if m and float(m.group(1)) > 90:
+                    retry = None  # 1日の上限。待っても無駄なので次の行へ
                 if retry:
-                    wait = 5 * (attempt + 1)
+                    wait = min(float(m.group(1)) + 2, 92) if m else 5 * (attempt + 1)
                     print(f"    一時的なエラー。{wait}秒後に再試行します: {msg[:120]}")
                     time.sleep(wait)
                     continue
