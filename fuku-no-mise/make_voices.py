@@ -157,6 +157,53 @@ def save_wav(path: Path, pcm: bytes, rate: int) -> None:
     tmp.replace(path)
 
 
+def concat_timed(rows: list[dict], out_dir: Path, dest: Path, timing: dict) -> None:
+    """台本の間（timing.json）どおりに無音を挟んで繋ぐ。ffmpeg は不要。"""
+    rate = DEFAULT_RATE
+    silence = lambda sec: b"\x00\x00" * int(rate * max(sec, 0))
+    before = {int(k): v for k, v in timing.get("before", {}).items()}
+    after = {int(k): v for k, v in timing.get("after", {}).items()}
+    silent = {int(k): v for k, v in timing.get("silent_cuts", {}).items()}
+    present = [r for r in rows if (out_dir / out_name(r)).exists()]
+    if not present:
+        print("繋ぐ音声ファイルがありません。")
+        return
+    chunks, prev_cut, t, cues, starts = [], None, 0.0, [], {}
+    def add(b: bytes):
+        nonlocal t
+        chunks.append(b); t += len(b) / 2 / rate
+    for r in present:
+        c = r["cut"]
+        if prev_cut is not None and c != prev_cut:
+            add(silence(after.get(prev_cut, 0) + timing.get("between_cuts", 0.8)))
+            for sc in sorted(silent):  # セリフのないカット（BGMのみ）
+                if prev_cut < sc < c and silent[sc]:
+                    starts[sc] = t
+                    add(silence(silent[sc] + timing.get("between_cuts", 0.8)))
+        elif prev_cut == c:
+            add(silence(timing.get("between_lines", 0.5)))
+        if c != prev_cut:
+            starts[c] = t
+            add(silence(before.get(c, 0)))
+        with wave.open(str(out_dir / out_name(r))) as w:
+            if w.getframerate() != rate or w.getnchannels() != 1 or w.getsampwidth() != 2:
+                raise RuntimeError(f"{out_name(r)} の形式が 24kHz/モノラル/16bit ではありません")
+            cues.append((t, out_name(r)))
+            add(w.readframes(w.getnframes()))
+        prev_cut = c
+    add(silence(after.get(prev_cut, 0)))
+    for sc in sorted(silent):
+        if sc > prev_cut and silent[sc]:
+            starts[sc] = t
+            add(silence(silent[sc]))
+    save_wav(dest, b"".join(chunks), rate)
+    (dest.parent / "all_cuts.json").write_text(
+        json.dumps({"total": t, "cut_starts": starts}, ensure_ascii=False, indent=1), encoding="utf-8")
+    (dest.with_suffix(".txt")).write_text(
+        "".join(f"{int(s//60)}:{s%60:05.2f}  {n}\n" for s, n in cues), encoding="utf-8")
+    print(f"台本の間を入れて繋ぎました: {dest}（{t:.1f}秒）。各セリフの開始時刻: {dest.with_suffix('.txt').name}")
+
+
 def concat(files: list[Path], dest: Path) -> None:
     if not shutil.which("ffmpeg"):
         print("ffmpeg が見つからないため all.wav は作りませんでした（ffmpeg を入れると使えます）。")
@@ -299,8 +346,13 @@ def main() -> None:
         print("\n最初の1行だけ作りました。聴いて問題なければ、--all を付けて全行を生成してください。")
 
     if args.concat and not args.dry_run:
-        files = [out_dir / out_name(r) for r in rows if (out_dir / out_name(r)).exists()]
-        concat(files, out_dir / "all.wav")
+        timing_path = HERE / "timing.json"
+        if timing_path.exists():
+            timing = json.loads(timing_path.read_text(encoding="utf-8"))
+            concat_timed(rows, out_dir, out_dir / "all.wav", timing)
+        else:
+            files = [out_dir / out_name(r) for r in rows if (out_dir / out_name(r)).exists()]
+            concat(files, out_dir / "all.wav")
 
     if failures:
         sys.exit(2)

@@ -7,6 +7,8 @@
 - `voices.json` … 話者ごとの声（Gemini のプリセット音声名）と話し方の指示文
 - `pronunciations.json` … 読み方・アクセントの指定（その言葉を含む行にだけ付け足す。セリフの文字は変えない）
 - `make_voices.py` … 生成スクリプト
+- `timing.json` … 通し版で入れる間（秒）。カットごとに `after` などで調整
+- `make_animatic.py` … 通し音声に合わせて、カットごとの文字カードを並べた絵コンテ動画を作る
 - `out/` … 生成された音声（`01-1_ナレーション.wav`, `06-2_福.wav` …の順に並びます）
 
 ## 準備（初回だけ）
@@ -24,6 +26,7 @@ python3 make_voices.py --all             # 全行を生成（既にあるファ�
 python3 make_voices.py --all --concat    # 全行生成のあと ffmpeg でカット順に繋いで out/all.wav を作る
 python3 make_voices.py --cut 6 --force   # カット6だけ作り直す
 python3 make_voices.py --all --check     # 生成後に文字起こしで確認し、指示文まで読んでいたら作り直す
+python3 make_animatic.py                 # 通し音声に合わせたカードの絵コンテ動画 out/animatic.mp4
 python3 make_voices.py --list-voices     # 使える声の一覧
 python3 make_voices.py --list-models     # 使える TTS モデルの一覧
 ```
