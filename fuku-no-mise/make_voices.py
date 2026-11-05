@@ -31,6 +31,11 @@ def die(msg: str) -> None:
 
 def get_client():
     key = os.environ.get("GEMINI_API_KEY")
+    if not key and os.environ.get("GEMINI_KEY_VIA_PROXY", "1") == "1" and os.environ.get("HTTPS_PROXY"):
+        # クラウド環境の「ネットワークシークレット」でキーを付けている場合、
+        # 通信の途中で本物のキー（x-goog-api-key）が付けられるので、ここでは仮の値でよい
+        key = "set-by-network-secret"
+        print("（GEMINI_API_KEY が無いため、ネットワークシークレットのキーを使います）")
     if not key:
         die(
             "環境変数 GEMINI_API_KEY が設定されていません。\n"

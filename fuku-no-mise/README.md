@@ -18,6 +18,8 @@ export GEMINI_API_KEY="AI Studio で作ったキー"   # Windows: $env:GEMINI_AP
 ```
 キーは https://aistudio.google.com/apikey で作れます。キーはファイルに書かないでください。
 
+Claude のクラウド環境で使う場合は、環境の「ネットワークシークレット」に入れます（ホスト `generativelanguage.googleapis.com`、ヘッダー `x-goog-api-key`、プレフィックスは空、トークンにキー）。このときは `GEMINI_API_KEY` が無くても動きます。
+
 ## 使い方
 ```bash
 python3 make_voices.py --dry-run --all   # API を呼ばずに、作るファイルと指示文を確認
