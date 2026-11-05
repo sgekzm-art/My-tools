@@ -142,6 +142,13 @@ def synth(client, model: str, voice: str, prompt: str) -> tuple[bytes, int]:
 
 def save_wav(path: Path, pcm: bytes, rate: int) -> None:
     tmp = path.with_suffix(".part")
+    if pcm[:4] == b"RIFF":
+        # Gemini がヘッダー付きの WAV をそのまま返す場合は、そのまま保存する
+        # （包み直すとヘッダーや末尾の情報チャンクが「ジッ」という雑音になる。
+        #   末尾の AI 生成の来歴情報も残しておく）
+        tmp.write_bytes(pcm)
+        tmp.replace(path)
+        return
     with wave.open(str(tmp), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
