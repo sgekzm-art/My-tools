@@ -157,7 +157,8 @@ def save_wav(path: Path, pcm: bytes, rate: int) -> None:
     tmp.replace(path)
 
 
-def concat_timed(rows: list[dict], out_dir: Path, dest: Path, timing: dict) -> None:
+def concat_timed(rows: list[dict], out_dir: Path, dest: Path, timing: dict,
+                 speeds: dict[str, float] | None = None) -> None:
     """台本の間（timing.json）どおりに無音を挟んで繋ぐ。ffmpeg は不要。"""
     rate = DEFAULT_RATE
     silence = lambda sec: b"\x00\x00" * int(rate * max(sec, 0))
@@ -185,7 +186,11 @@ def concat_timed(rows: list[dict], out_dir: Path, dest: Path, timing: dict) -> N
         if c != prev_cut:
             starts[c] = t
             add(silence(before.get(c, 0)))
-        with wave.open(str(out_dir / out_name(r))) as w:
+        src = out_dir / out_name(r)
+        sp = (speeds or {}).get(r["speaker"], 1.0)
+        if sp != 1.0:
+            src = speed_up(src, sp, out_dir / "speed")
+        with wave.open(str(src)) as w:
             if w.getframerate() != rate or w.getnchannels() != 1 or w.getsampwidth() != 2:
                 raise RuntimeError(f"{out_name(r)} の形式が 24kHz/モノラル/16bit ではありません")
             cues.append((t, out_name(r)))
@@ -202,6 +207,16 @@ def concat_timed(rows: list[dict], out_dir: Path, dest: Path, timing: dict) -> N
     (dest.with_suffix(".txt")).write_text(
         "".join(f"{int(s//60)}:{s%60:05.2f}  {n}\n" for s, n in cues), encoding="utf-8")
     print(f"台本の間を入れて繋ぎました: {dest}（{t:.1f}秒）。各セリフの開始時刻: {dest.with_suffix('.txt').name}")
+
+
+def speed_up(src: Path, speed: float, cache: Path) -> Path:
+    """声の高さを変えずに話す速さを変えた WAV を作る（ffmpeg の atempo）。元のファイルは残す。"""
+    cache.mkdir(exist_ok=True)
+    dst = cache / src.name
+    if not dst.exists() or dst.stat().st_mtime < src.stat().st_mtime:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-af", f"atempo={speed}",
+                        "-ar", str(DEFAULT_RATE), "-ac", "1", "-sample_fmt", "s16", str(dst)], check=True)
+    return dst
 
 
 def concat(files: list[Path], dest: Path) -> None:
@@ -349,7 +364,8 @@ def main() -> None:
         timing_path = HERE / "timing.json"
         if timing_path.exists():
             timing = json.loads(timing_path.read_text(encoding="utf-8"))
-            concat_timed(rows, out_dir, out_dir / "all.wav", timing)
+            speeds = {k: float(x.get("speed", 1.0)) for k, x in voices.items()}
+            concat_timed(rows, out_dir, out_dir / "all.wav", timing, speeds)
         else:
             files = [out_dir / out_name(r) for r in rows if (out_dir / out_name(r)).exists()]
             concat(files, out_dir / "all.wav")
