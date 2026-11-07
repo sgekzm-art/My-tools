@@ -1,0 +1,589 @@
+<title>ふくとジョン</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+  /* Layout: full-bleed 9:16 picture-book frame (no letterbox), editor beside it on wide screens. Single dark studio look around the frame. */
+  :root {
+    --bg: #14161d;
+    --panel: #1e212b;
+    --line: #2f3340;
+    --fg: #f2f3f7;
+    --muted: #a3a8b8;
+    --pink: #ff6f9c;
+    --blue: #3f8fe0;
+    --display: "Mochiy Pop One", "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
+    --body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 16px 32px;
+  }
+  main { display: grid; gap: 22px; max-width: 1200px; margin: 0 auto; }
+  @media (min-width: 900px) { main { grid-template-columns: auto minmax(0, 1fr); align-items: start; } }
+  .film-col { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  svg#film { width: min(100%, calc(82vh * 9 / 16)); aspect-ratio: 9 / 16; max-width: 100%; display: block; border-radius: 16px; background: #8fb3e0; }
+  .bar { width: min(100%, calc(82vh * 9 / 16)); min-width: min(100%, 300px); display: flex; align-items: center; gap: 8px; background: var(--panel); border-radius: 999px; padding: 6px 12px 6px 6px; box-sizing: border-box; }
+  button { font: 800 14px var(--body); color: #fff; border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; background: var(--pink); }
+  button.ghost { background: transparent; color: var(--muted); padding-inline: 8px; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .bar input[type=range] { flex: 1; min-width: 0; accent-color: var(--pink); }
+  .time { font: 500 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.6em; text-align: right; }
+
+  .editor { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  h1 { font: 400 30px var(--display); margin: 0; }
+  h1 .f { color: var(--pink); } h1 .j { color: var(--blue); }
+  .lead { margin: 0; color: var(--muted); line-height: 1.75; max-width: 62ch; }
+  .cast { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .cast div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; line-height: 1.6; font-size: 14px; }
+  .cast b { font: 400 17px var(--display); display: block; margin-bottom: 2px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs button { background: var(--panel); border: 1px solid var(--line); font-weight: 500; }
+  .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  summary { cursor: pointer; font-weight: 800; }
+  details[open] summary { margin-bottom: 12px; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 360px; resize: vertical; background: #171920; color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font: 14px/1.75 var(--mono); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .msg { color: #ffb3c4; font-size: 13px; margin: 0; }
+  .msg.ok { color: #9fe0b5; }
+  dl { margin: 14px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 13px; line-height: 1.7; }
+  dt { color: var(--muted); } dd { margin: 0; }
+  code { font-family: var(--mono); background: #2a2e3a; padding: 1px 5px; border-radius: 5px; }
+</style>
+
+<main>
+  <div class="film-col">
+    <svg id="film" viewBox="0 0 1080 1920" role="img" aria-label="ふくとジョンの会話アニメ">
+      <defs>
+        <pattern id="dots" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="15" cy="15" r="5" fill="#fff" opacity=".22"/><circle cx="45" cy="45" r="5" fill="#fff" opacity=".22"/></pattern>
+        <clipPath id="frameClip"><rect width="1080" height="1920"/></clipPath>
+      </defs>
+      <g clip-path="url(#frameClip)">
+        <g id="shake">
+          <g id="bg"></g>
+          <g id="dogs"></g>
+          <g id="prop"></g>
+          <g id="bubbles"></g>
+        </g>
+        <g id="title"></g>
+        <text id="sfx" x="800" y="560" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="130" fill="#ffd23f" stroke="#3a2e28" stroke-width="14" paint-order="stroke" stroke-linejoin="round"></text>
+        <rect id="flash" width="1080" height="1920" fill="#fffef2" opacity="0"/>
+        <g id="ending" opacity="0"></g>
+      </g>
+    </svg>
+    <div class="bar">
+      <button id="play" type="button">一時停止</button>
+      <input id="seek" type="range" min="0" max="20" step="0.01" value="0" aria-label="再生位置">
+      <span class="time" id="time">0.0s</span>
+      <button id="replay" type="button" class="ghost">最初から</button>
+    </div>
+  </div>
+
+  <section class="editor">
+    <h1><span class="f">ふく</span>と<span class="j">ジョン</span></h1>
+    <p class="lead">性格がまるで逆の二匹の、なんでもない毎日。全画面にして画面録画すると、そのまま縦型ショート動画になります。</p>
+    <div class="cast">
+      <div><b style="color:var(--pink)">ふく</b>甘えんぼう・気まぐれ・気が強い。ピンクの首輪がトレードマーク。</div>
+      <div><b style="color:var(--blue)">ジョン</b>食いしん坊・臆病・気が小さい。小声のときは点線のふきだしになる。</div>
+    </div>
+    <div class="tabs" id="tabs" role="group" aria-label="エピソード"></div>
+    <details id="editBox">
+      <summary>台本を書いて新しい話をつくる</summary>
+      <label for="script" class="lead">台本</label>
+      <textarea id="script" spellcheck="false"></textarea>
+      <div class="row"><button id="apply" type="button">反映して再生</button><p class="msg" id="msg" role="status"></p></div>
+      <dl>
+        <dt><code>タイトル:</code></dt><dd>リボンに出る話のタイトル</dd>
+        <dt><code>背景:</code></dt><dd id="refBg"></dd>
+        <dt><code>ふく: セリフ</code></dt><dd>最後に <code>[表情]</code>：<span id="refFaces"></span></dd>
+        <dt><code>(セリフ)</code></dt><dd>かっこで囲むと小声（点線ふきだし）</dd>
+        <dt><code>表情:</code></dt><dd>しゃべらずに表情だけ変える（例 <code>表情: ジョン こわい</code>）</dd>
+        <dt><code>音:</code></dt><dd>効果音。<code>！</code> がつくと全員びっくり（例 <code>音: ガチャ！</code>）</dd>
+        <dt><code>退場: / 登場:</code></dt><dd>右へ走って出ていく／戻ってくる</dd>
+        <dt><code>寄る:</code></dt><dd>もう一匹のそばへ寄る（例 <code>寄る: ふく</code>）</dd>
+        <dt><code>小物:</code></dt><dd id="refProps"></dd>
+        <dt><code>おわり:</code></dt><dd>最後のテロップ。<code>/</code> で改行</dd>
+      </dl>
+    </details>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+  const seg = (t, a, b) => ease(clamp((t - a) / (b - a)));
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const OUT = '#3a2e28';
+
+  /* ================= dogs (same drawing style as the ふく LINE stickers) ================= */
+  const C = {
+    line: '#4a3a30', fawn: '#e2b98a', fawnD: '#c99a68', grey: '#a39d96', greyD: '#857f79',
+    white: '#fbf6ee', brow: '#f7ecdc', earIn: '#f3c3b5', nose: '#2e2622', tongue: '#f4889f',
+    collar: '#f27ba0', tag: '#d6337a', blush: '#ff9db4',
+    choc: '#7b4f36', chocD: '#5a3826', tan: '#dea56b', cream: '#f4d6a8', band: '#6fb6e8', jink: '#2a1d17',
+  };
+  const LW = 6;
+  const st = (fill, w = LW) => `fill="${fill}" stroke="${C.line}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+  function fuzz(cx, cy, rx, ry, n, amp, rot = 0) {
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2 + rot; pts.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); }
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const a = (i - 0.5) / n * Math.PI * 2 + rot;
+      d += ` Q${(cx + Math.cos(a) * rx * (1 + amp)).toFixed(1)},${(cy + Math.sin(a) * ry * (1 + amp)).toFixed(1)} ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+    }
+    return d + 'Z';
+  }
+  const heart = (x, y, s, c = '#ff5c8a', r = 0) => `<path transform="translate(${x},${y}) rotate(${r}) scale(${s / 20})" d="M0,18 C-28,-2 -22,-26 -8,-26 C-2,-26 0,-20 0,-18 C0,-20 2,-26 8,-26 C22,-26 28,-2 0,18Z" fill="${c}" stroke="${C.line}" stroke-width="${4 * 20 / s}" stroke-linejoin="round"/>`;
+  const drop = (x, y, s = 1) => `<path transform="translate(${x},${y}) scale(${s})" d="M0,-30 Q22,0 18,12 Q12,26 0,26 Q-12,26 -18,12 Q-22,0 0,-30Z" fill="#7cc4f2" stroke="${C.line}" stroke-width="${4 / s}"/>`;
+  const anger = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})" fill="none" stroke="#f0473f" stroke-width="9" stroke-linecap="round"><path d="M-30,-8 Q-12,-10 -10,-30"/><path d="M8,-30 Q10,-12 30,-8"/><path d="M30,10 Q12,12 10,30"/><path d="M-10,30 Q-12,12 -30,10"/></g>`;
+  const shock = (r, angles) => angles.map(a => { const t = a * Math.PI / 180; return `<path d="M${Math.cos(t) * r},${Math.sin(t) * r - 40} L${Math.cos(t) * (r + 44)},${Math.sin(t) * (r + 44) - 40}" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/>`; }).join('');
+
+  // shared face: eyes, tears, nose, mouth, effects
+  function faceParts(o, ink) {
+    const eyes = o.eyes || 'open', mouth = o.mouth || 'w';
+    let s = '';
+    if (o.blush !== false) s += `<ellipse cx="-110" cy="42" rx="24" ry="13" fill="${C.blush}" opacity="${o.blush === 'big' ? 0.95 : 0.6}"/><ellipse cx="110" cy="42" rx="24" ry="13" fill="${C.blush}" opacity="${o.blush === 'big' ? 0.95 : 0.6}"/>`;
+    const E = x => {
+      switch (eyes) {
+        case 'happy': return `<path d="M${x - 22},2 Q${x},-24 ${x + 22},2" fill="none" stroke="${ink}" stroke-width="8" stroke-linecap="round"/>`;
+        case 'closed': return `<path d="M${x - 22},-4 Q${x},14 ${x + 22},-4" fill="none" stroke="${ink}" stroke-width="8" stroke-linecap="round"/>`;
+        case 'xx': { const sx = x < 0 ? 1 : -1; return `<path d="M${x - 18 * sx},-18 L${x + 16 * sx},-4 L${x - 18 * sx},10" fill="none" stroke="${ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>`; }
+        case 'wide': return `<ellipse cx="${x}" cy="-6" rx="24" ry="28" fill="#fff" stroke="${ink}" stroke-width="5"/><circle cx="${x}" cy="-4" r="10" fill="${C.nose}"/>`;
+        case 'sparkle': return `<ellipse cx="${x}" cy="-6" rx="19" ry="23" fill="${C.nose}"/><circle cx="${x + 6}" cy="-14" r="7" fill="#fff"/><circle cx="${x - 7}" cy="3" r="3.5" fill="#fff"/><path d="M${x - 3},-30 l3,-8 3,8 8,3 -8,3 -3,8 -3,-8 -8,-3Z" fill="#fff"/>`;
+        default: return `<ellipse cx="${x}" cy="-6" rx="18" ry="22" fill="${C.nose}"/><circle cx="${x + 6}" cy="-14" r="6.5" fill="#fff"/><circle cx="${x - 6}" cy="2" r="3" fill="#fff"/>`;
+      }
+    };
+    s += E(-62) + E(62);
+    if (o.tears) s += `<path d="M-70,16 Q-84,40 -72,48 Q-58,42 -70,16Z" fill="#7cc4f2" stroke="${ink}" stroke-width="3"/>`;
+    if (o.cry) s += `<path d="M-80,10 Q-90,70 -78,130" fill="none" stroke="#7cc4f2" stroke-width="16" stroke-linecap="round" opacity=".9"/><path d="M80,10 Q90,70 78,130" fill="none" stroke="#7cc4f2" stroke-width="16" stroke-linecap="round" opacity=".9"/>`;
+    s += `<path d="M-24,22 Q0,10 24,22 Q22,44 0,48 Q-22,44 -24,22Z" fill="${C.nose}"/><ellipse cx="-7" cy="22" rx="8" ry="4" fill="#fff" opacity=".7"/>`;
+    const w = `<path d="M0,48 L0,58 M-30,60 Q-15,78 0,58 Q15,78 30,60" fill="none" stroke="${ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    switch (mouth) {
+      case 'tongue': s += `<path d="M-15,66 Q-18,112 0,114 Q18,112 15,66Z" ${st(C.tongue, 4.5)}/><path d="M0,72 L0,98" stroke="#d9637f" stroke-width="3.5" stroke-linecap="round"/>` + w; break;
+      case 'open': s += `<path d="M-30,60 Q0,62 30,60 Q24,108 0,110 Q-24,108 -30,60Z" ${st('#9b3b4a', 4.5)}/><path d="M-14,94 Q0,82 14,94 Q12,108 0,108 Q-12,108 -14,94Z" fill="${C.tongue}"/><path d="M0,48 L0,58" stroke="${ink}" stroke-width="5"/>`; break;
+      case 'o': s += `<path d="M0,48 L0,58" stroke="${ink}" stroke-width="5"/><ellipse cx="0" cy="82" rx="15" ry="19" ${st('#9b3b4a', 4.5)}/>`; break;
+      case 'frown': s += `<path d="M0,48 L0,58 M-24,80 Q0,60 24,80" fill="none" stroke="${ink}" stroke-width="5" stroke-linecap="round"/>`; break;
+      case 'pout': s += `<path d="M0,48 L0,60 M-14,74 Q0,64 14,74" fill="none" stroke="${ink}" stroke-width="5" stroke-linecap="round"/>`; break;
+      case 'wavy': s += `<path d="M0,48 L0,58 M-26,74 q6.5,-9 13,0 t13,0 t13,0 t13,0" fill="none" stroke="${ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`; break;
+      case 'drool': s += w + `<path d="M24,68 Q28,96 22,104 Q14,96 24,68Z" fill="#bfe6ff" stroke="${ink}" stroke-width="3"/>`; break;
+      default: s += w;
+    }
+    if (o.sweat) s += drop(160, -80, 1.1) + drop(196, -14, .7);
+    if (o.anger) s += anger(150, -150, 1.1);
+    if (o.shock) s += shock(190, [-150, -120, -90, -60, -30]);
+    if (o.hearts) s += heart(-185, -150, 40, '#ff5c8a', -15) + heart(190, -170, 32, '#ff8fb1', 14);
+    return s;
+  }
+
+  function fukuHead(o) {
+    const ears = o.ears || 'up';
+    let s = '';
+    const ear = sx => {
+      const r = ears === 'up' ? 0 : ears === 'down' ? 62 : 30;
+      return `<g transform="translate(${sx * 112},-78) rotate(${sx * r}) scale(${sx},1)"><path d="M-38,20 Q-50,-95 -12,-150 Q40,-80 38,15Z" ${st(C.greyD)}/><path d="M-20,8 Q-28,-70 -8,-112 Q22,-60 20,5Z" fill="${C.earIn}"/></g>`;
+    };
+    s += ear(-1) + ear(1);
+    const head = fuzz(0, 0, 168, 142, 30, 0.045);
+    s += `<defs><clipPath id="fukuClip"><path d="${head}"/></clipPath><linearGradient id="fukuGrad" gradientUnits="userSpaceOnUse" x1="0" y1="-150" x2="0" y2="-10"><stop offset="0" stop-color="${C.greyD}"/><stop offset=".45" stop-color="${C.grey}"/><stop offset="1" stop-color="${C.grey}" stop-opacity="0"/></linearGradient></defs>`;
+    s += `<path d="${head}" fill="${C.fawn}"/><g clip-path="url(#fukuClip)"><rect x="-200" y="-160" width="400" height="160" fill="url(#fukuGrad)"/><path d="${fuzz(-150, 40, 40, 60, 10, 0.08)}" fill="${C.fawnD}" opacity=".35"/><path d="${fuzz(150, 40, 40, 60, 10, 0.08)}" fill="${C.fawnD}" opacity=".35"/></g>`;
+    s += `<path d="${head}" fill="none" stroke="${C.line}" stroke-width="${LW}" stroke-linejoin="round"/>`;
+    if (o.brows === 'angry') s += `<path d="M-95,-58 L-35,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/><path d="M95,-58 L35,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/>`;
+    else if (o.brows === 'sad') s += `<path d="${fuzz(-62, -50, 30, 11, 8, 0.15)}" fill="${C.brow}" transform="rotate(-14 -62 -50)"/><path d="${fuzz(62, -50, 30, 11, 8, 0.15)}" fill="${C.brow}" transform="rotate(14 62 -50)"/>`;
+    else s += `<path d="${fuzz(-62, -52, 30, 12, 8, 0.15)}" fill="${C.brow}"/><path d="${fuzz(62, -52, 30, 12, 8, 0.15)}" fill="${C.brow}"/>`;
+    s += `<path d="${fuzz(0, 58, 88, 62, 16, 0.07)}" fill="${C.white}"/>`;
+    return s + faceParts(o, C.line);
+  }
+  const fukuBody = `
+    <path d="${fuzz(0, 205, 118, 100, 22, 0.05)}" ${st(C.fawn)}/>
+    <path d="${fuzz(0, 215, 62, 66, 14, 0.07)}" fill="${C.white}"/>
+    <path d="M-92,150 Q0,190 92,150 L96,172 Q0,214 -96,172Z" ${st(C.collar, 5)}/>
+    <g transform="translate(0,205)"><path d="M-30,-11 a12,12 0 1 1 6,-10 h48 a12,12 0 1 1 6,10 a12,12 0 1 1 -6,10 h-48 a12,12 0 1 1 -6,-10Z" ${st(C.tag, 4)}/><text x="0" y="8" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="22" fill="#fff">ふく</text></g>
+    <ellipse cx="-50" cy="292" rx="40" ry="26" ${st(C.white)}/><ellipse cx="50" cy="292" rx="40" ry="26" ${st(C.white)}/>`;
+  const fukuTail = `<path d="M92,238 Q178,236 172,160 Q168,122 136,134 Q128,150 146,160 Q150,196 96,206Z" ${st(C.grey)}/>`;
+
+  // ジョン: long-haired chocolate & tan, big feathered floppy ears, blue bandana
+  function johnHead(o) {
+    const ears = o.ears || 'up';
+    let s = '';
+    const head = fuzz(0, 4, 152, 136, 30, 0.05);
+    s += `<path d="${head}" ${st(C.choc)}/>`;
+    if (o.brows === 'angry') s += `<path d="M-90,-58 L-36,-38" stroke="${C.tan}" stroke-width="16" stroke-linecap="round"/><path d="M90,-58 L36,-38" stroke="${C.tan}" stroke-width="16" stroke-linecap="round"/>`;
+    else if (o.brows === 'sad') s += `<ellipse cx="-58" cy="-52" rx="22" ry="12" fill="${C.tan}" transform="rotate(-18 -58 -52)"/><ellipse cx="58" cy="-52" rx="22" ry="12" fill="${C.tan}" transform="rotate(18 58 -52)"/>`;
+    else s += `<ellipse cx="-58" cy="-54" rx="22" ry="14" fill="${C.tan}"/><ellipse cx="58" cy="-54" rx="22" ry="14" fill="${C.tan}"/>`;
+    s += `<path d="${fuzz(0, 60, 90, 64, 16, 0.07)}" fill="${C.tan}"/><path d="${fuzz(0, 68, 60, 44, 14, 0.07)}" fill="${C.cream}"/>`;
+    // floppy feathered ears hang over the sides of the head
+    const rot = ears === 'down' ? 16 : ears === 'side' ? -6 : 0;
+    const ear = sx => `<g transform="translate(${sx * 128},-70) rotate(${-sx * rot}) scale(${-sx},1)">
+      <path d="M-6,-12 C-56,-22 -96,14 -100,84 C-104,140 -92,186 -62,206 Q-66,186 -46,186 Q-48,168 -24,170 Q-8,150 6,128 Q22,60 16,0 Z" ${st(C.chocD)}/>
+      <path d="M-60,40 Q-76,100 -66,160 M-36,30 Q-48,90 -40,150" fill="none" stroke="${C.choc}" stroke-width="6" stroke-linecap="round"/></g>`;
+    s += ear(-1) + ear(1);
+    return s + faceParts(o, C.jink);
+  }
+  const johnBody = `
+    <path d="${fuzz(0, 208, 110, 96, 22, 0.06)}" ${st(C.choc)}/>
+    <path d="${fuzz(0, 222, 56, 60, 14, 0.08)}" fill="${C.tan}"/>
+    <path d="M-96,146 Q0,182 96,146 L44,238 Q0,262 -44,238Z" ${st(C.band, 5)}/>
+    <g fill="#fff" opacity=".9"><circle cx="-50" cy="176" r="7"/><circle cx="0" cy="196" r="7"/><circle cx="50" cy="176" r="7"/><circle cx="-18" cy="228" r="6"/><circle cx="22" cy="226" r="6"/></g>
+    <ellipse cx="-48" cy="292" rx="38" ry="25" ${st(C.tan)}/><ellipse cx="48" cy="292" rx="38" ry="25" ${st(C.tan)}/>`;
+  const johnTail = `<path d="M86,232 Q196,250 194,150 Q190,104 150,116 Q174,156 146,192 Q124,214 90,204Z" ${st(C.chocD)}/><path d="M150,140 Q170,170 150,196" fill="none" stroke="${C.choc}" stroke-width="6" stroke-linecap="round"/>`;
+
+  const DOGS = {
+    'ふく': { head: fukuHead, body: fukuBody, tail: fukuTail, home: 300, color: '#ff6f9c' },
+    'ジョン': { head: johnHead, body: johnBody, tail: johnTail, home: 790, color: '#3f8fe0' },
+  };
+
+  /* ================= expressions ================= */
+  const FACES = {
+    'ふつう': { eyes: 'open', mouth: 'w' },
+    'にこにこ': { eyes: 'happy', mouth: 'tongue', wag: 2 },
+    'キラキラ': { eyes: 'sparkle', mouth: 'tongue', wag: 2.5 },
+    'ラブ': { eyes: 'happy', mouth: 'tongue', blush: 'big', hearts: true, wag: 3 },
+    'てれ': { eyes: 'closed', mouth: 'w', blush: 'big', ears: 'side', wag: 1.5 },
+    'ドヤ': { eyes: 'closed', mouth: 'w', tilt: -8, wag: 1.2 },
+    'ツン': { eyes: 'closed', mouth: 'pout', brows: 'angry', tilt: 12 },
+    'おこ': { eyes: 'open', mouth: 'pout', brows: 'angry', anger: true, ears: 'side' },
+    'びっくり': { eyes: 'wide', mouth: 'o', blush: false, shock: true },
+    'あせ': { eyes: 'open', mouth: 'wavy', brows: 'sad', sweat: true },
+    'かなしい': { eyes: 'open', mouth: 'frown', brows: 'sad', ears: 'down', tears: true, wag: 0 },
+    'なき': { eyes: 'xx', mouth: 'open', ears: 'down', cry: true, wag: 0 },
+    'こわい': { eyes: 'wide', mouth: 'wavy', brows: 'sad', ears: 'down', sweat: true, blush: false, tremble: true, wag: 0 },
+    'よだれ': { eyes: 'sparkle', mouth: 'drool', wag: 3 },
+    'ねむい': { eyes: 'closed', mouth: 'w', wag: 0.3 },
+  };
+
+  /* ================= backgrounds & props ================= */
+  const BGS = {
+    'リビング': `
+      <rect width="1080" height="1260" fill="#8fb3e0"/><rect width="1080" height="1260" fill="url(#dots)"/>
+      <rect x="610" y="470" width="350" height="300" rx="16" fill="#e6f5ff" stroke="#fff" stroke-width="18"/>
+      <path d="M785 470 V770 M610 620 H960" stroke="#fff" stroke-width="12"/>
+      <ellipse cx="700" cy="545" rx="50" ry="18" fill="#fff"/><ellipse cx="880" cy="690" rx="40" ry="14" fill="#fff"/>
+      <rect y="1250" width="1080" height="670" fill="#f0d29f"/>
+      <g stroke="#e2bf86" stroke-width="5">${[1360, 1500, 1660, 1830].map(y => `<line x1="0" y1="${y}" x2="1080" y2="${y}"/>`).join('')}</g>
+      <rect y="1236" width="1080" height="22" fill="#fff"/>
+      <ellipse cx="540" cy="1580" rx="480" ry="130" fill="#f7b3c2"/>
+      <ellipse cx="540" cy="1580" rx="430" ry="104" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="4 22" stroke-linecap="round"/>`,
+    '夜のリビング': `
+      <rect width="1080" height="1260" fill="#2f3b66"/><rect width="1080" height="1260" fill="url(#dots)" opacity=".35"/>
+      <rect x="610" y="470" width="350" height="300" rx="16" fill="#18203f" stroke="#55608f" stroke-width="18"/>
+      <path d="M785 470 V770 M610 620 H960" stroke="#55608f" stroke-width="12"/>
+      <g stroke="#8fa3d9" stroke-width="5" stroke-linecap="round" opacity=".8">${[[650, 500], [720, 560], [840, 510], [900, 650], [680, 680], [800, 700], [920, 540]].map(([x, y]) => `<line x1="${x}" y1="${y}" x2="${x - 14}" y2="${y + 40}"/>`).join('')}</g>
+      <ellipse cx="170" cy="980" rx="230" ry="230" fill="#ffe7a8" opacity=".12"/>
+      <rect y="1250" width="1080" height="670" fill="#7d6750"/>
+      <g stroke="#6e5944" stroke-width="5">${[1360, 1500, 1660, 1830].map(y => `<line x1="0" y1="${y}" x2="1080" y2="${y}"/>`).join('')}</g>
+      <rect y="1236" width="1080" height="22" fill="#55608f"/>
+      <ellipse cx="540" cy="1580" rx="480" ry="130" fill="#93607a"/>
+      <ellipse cx="540" cy="1580" rx="430" ry="104" fill="none" stroke="#c99ab0" stroke-width="6" stroke-dasharray="4 22" stroke-linecap="round"/>`,
+  };
+  const PROPS = {
+    'おやつ': `<g transform="translate(545 1690) rotate(-8)"><path d="M-70,-14 a22,22 0 1 1 10,-22 h120 a22,22 0 1 1 10,22 a22,22 0 1 1 -10,22 h-120 a22,22 0 1 1 -10,-22Z" fill="#f3d9a4" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/><path d="M-40,-6 h80" stroke="#e1bd7c" stroke-width="6" stroke-linecap="round"/></g>`,
+    'ボール': `<g transform="translate(545 1680)"><circle r="56" fill="#ff7a59" stroke="${OUT}" stroke-width="7"/><path d="M-54,-12 Q0,24 54,-12" fill="none" stroke="#fff" stroke-width="10"/></g>`,
+    'ごはん': `<g transform="translate(545 1690)"><path d="M-90,-14 Q-90,50 -46,62 L46,62 Q90,50 90,-14Z" fill="#6fb6e8" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/>${[[-44, -22], [-14, -30], [14, -24], [42, -28], [-28, -40], [2, -44], [28, -42]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="14" fill="#b7703d" stroke="${OUT}" stroke-width="4"/>`).join('')}<path d="M-96,-16 Q0,4 96,-16" fill="none" stroke="${OUT}" stroke-width="7" stroke-linecap="round"/></g>`,
+  };
+
+  /* ================= episodes ================= */
+  const EPISODES = [
+    { name: '第1話 おやつ', text: `タイトル: 第1話 おやつはだれのもの
+背景: リビング
+小物: おやつ
+ジョン: ……おやつ [よだれ]
+ふく: それ わたしの [おこ]
+ジョン: えっ [こわい]
+ジョン: (はんぶんこ…とか…) [あせ]
+ふく: やだ [ツン]
+ジョン: ですよね [なき]
+音: ガチャ！
+ふく: おかえり〜！ [ラブ]
+退場: ふく
+表情: ジョン ふつう
+ジョン: …… [キラキラ]
+ジョン: いただきます [にこにこ]
+音: もぐもぐ
+小物: なし
+登場: ふく
+ふく: わたしのおやつは？ [おこ]
+ジョン: ひぃ [こわい]
+おわり: このあと ふたりとも/ちゃんとおやつをもらいました` },
+    { name: '第2話 かみなり', text: `タイトル: 第2話 かみなりの夜
+背景: 夜のリビング
+音: ゴロゴロ…
+ジョン: こわい… [こわい]
+ふく: ジョンはよわいなぁ [ドヤ]
+ジョン: (だって…) [かなしい]
+ふく: わたしはへいきだもん [ツン]
+音: ドーン！
+寄る: ふく
+ふく: …… [こわい]
+ジョン: ふく？ [びっくり]
+ふく: (ちょっとだけ くっついていい？) [てれ]
+ジョン: …うん [てれ]
+おわり: その夜は/くっついてねました` },
+  ];
+
+  /* ================= parser ================= */
+  function parse(src) {
+    const ep = { title: '', bg: 'リビング', events: [], ending: [], errors: [] };
+    const names = Object.keys(DOGS);
+    src.split(/\r?\n/).forEach((raw, i) => {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) return;
+      const m = line.match(/^([^:：]+)[:：]\s*(.*)$/);
+      const err = s => ep.errors.push(`${i + 1}行目: ${s}`);
+      if (!m) return err('「名前: セリフ」の形で書いてください');
+      const key = m[1].trim(), val = m[2].trim();
+      if (key === 'タイトル') ep.title = val;
+      else if (key === 'キャラ') {}
+      else if (key === '背景') { if (BGS[val]) ep.bg = val; else err(`背景「${val}」はありません`); }
+      else if (key === '音') ep.events.push({ kind: 'sfx', text: val, loud: /[!！]/.test(val) });
+      else if (key === '小物') { if (val === 'なし' || PROPS[val]) ep.events.push({ kind: 'prop', prop: val === 'なし' ? null : val }); else err(`小物「${val}」はありません`); }
+      else if (['退場', '登場', '寄る'].includes(key)) { if (DOGS[val]) ep.events.push({ kind: 'move', who: val, how: key }); else err(`「${val}」はいません（ふく・ジョン）`); }
+      else if (key === '表情') {
+        const [who, f] = val.split(/\s+/);
+        if (!DOGS[who]) err(`「${who}」はいません`); else if (!FACES[f]) err(`表情「${f}」はありません`);
+        else ep.events.push({ kind: 'face', who, face: f });
+      }
+      else if (key === 'おわり') ep.ending = val.split('/').map(s => s.trim()).filter(Boolean);
+      else if (names.includes(key)) {
+        let text = val, face = 'ふつう';
+        const fm = val.match(/^(.*?)\s*[\[［]([^\]］]+)[\]］]\s*$/);
+        if (fm) { text = fm[1]; if (FACES[fm[2]]) face = fm[2]; else err(`表情「${fm[2]}」はありません`); }
+        let small = false;
+        const sm = text.match(/^[(（](.*)[)）]$/);
+        if (sm) { small = true; text = sm[1]; }
+        ep.events.push({ kind: 'say', who: key, text, face, small });
+      }
+      else err(`「${key}」はわかりません`);
+    });
+    let t = 0.9;
+    ep.events.forEach(e => {
+      e.t = t;
+      e.d = e.kind === 'say' ? Math.max(1.4, 1.0 + 0.15 * [...e.text].length) : e.kind === 'sfx' ? 1.4 : e.kind === 'move' ? 1.1 : e.kind === 'prop' ? 0.6 : 0.2;
+      t += e.d;
+    });
+    ep.end = t;
+    ep.dur = t + (ep.ending.length ? 3.4 : 1);
+    // position keyframes per dog
+    ep.pos = {};
+    for (const n of names) {
+      const ks = [{ t: -1, x: DOGS[n].home }];
+      ep.events.filter(e => e.kind === 'move' && e.who === n).forEach(e => {
+        const other = names.find(o => o !== n);
+        const x = e.how === '退場' ? 1400 : e.how === '登場' ? DOGS[n].home : DOGS[other].home + (DOGS[n].home < DOGS[other].home ? -250 : 250);
+        ks.push({ t: e.t, x });
+      });
+      ep.pos[n] = ks;
+    }
+    return ep;
+  }
+
+  /* ================= scene build ================= */
+  const NS = 'http://www.w3.org/2000/svg';
+  const seek = $('seek'), playBtn = $('play'), timeEl = $('time'), ta = $('script');
+  const SCALE = 1.1, BASE_Y = 1180;
+  let ep, dogs = {};
+
+  function titleSVG(t) {
+    const len = Math.max(4, [...t].length);
+    const fs = Math.min(54, Math.floor(820 / len));
+    const w = len * fs + 80;
+    return `<g transform="rotate(-4 300 200)">
+        <rect x="50" y="90" width="560" height="170" rx="40" fill="#fff" stroke="${OUT}" stroke-width="8"/>
+        <text x="330" y="208" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="96"><tspan fill="#ff6f9c">ふく</tspan><tspan fill="${OUT}" font-size="70">と</tspan><tspan fill="#3f8fe0">ジョン</tspan></text>
+      </g>` + (t ? `<g transform="rotate(2 ${70 + w / 2} 330)">
+        <path d="M60 280 H${70 + w} l-26 46 l26 46 H60 Z" fill="#ffd23f" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/>
+        <text x="${60 + (w - 20) / 2}" y="${326 + fs * 0.36}" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="${fs}" fill="${OUT}">${esc(t)}</text></g>` : '');
+  }
+
+  function build(src) {
+    ep = parse(src);
+    $('bg').innerHTML = BGS[ep.bg];
+    $('title').innerHTML = titleSVG(ep.title);
+    $('dogs').innerHTML = ''; $('bubbles').innerHTML = ''; $('prop').innerHTML = '';
+    dogs = {};
+    for (const [name, d] of Object.entries(DOGS)) {
+      const g = document.createElementNS(NS, 'g');
+      g.innerHTML = `<g class="tail">${d.tail}</g><g class="body">${d.body}</g><g class="head"></g>`;
+      $('dogs').appendChild(g);
+      const b = document.createElementNS(NS, 'g');
+      $('bubbles').appendChild(b);
+      dogs[name] = { name, d, g, tail: g.querySelector('.tail'), body: g.querySelector('.body'), head: g.querySelector('.head'), bub: b, faceKey: '', bubKey: null };
+    }
+    $('ending').innerHTML = ep.ending.length ? `<rect width="1080" height="1920" fill="#14161d" opacity=".55"/>
+      <g transform="rotate(-2 540 960)"><rect x="110" y="${760 - ep.ending.length * 40}" width="860" height="${260 + ep.ending.length * 80}" rx="48" fill="#fff" stroke="${OUT}" stroke-width="8"/>
+      ${ep.ending.map((l, i) => `<text x="540" y="${850 - ep.ending.length * 40 + i * 80}" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="54" fill="${OUT}">${esc(l)}</text>`).join('')}
+      <text x="540" y="${930 + ep.ending.length * 40}" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="70"><tspan fill="#ff6f9c">お</tspan><tspan fill="#3f8fe0">し</tspan><tspan fill="#ff6f9c">ま</tspan><tspan fill="#3f8fe0">い</tspan></text></g>` : '';
+    seek.max = ep.dur.toFixed(2);
+    const m = $('msg');
+    m.className = 'msg' + (ep.errors.length ? '' : ' ok');
+    m.textContent = ep.errors.length ? ep.errors.slice(0, 3).join(' / ') : `${ep.dur.toFixed(0)}秒のアニメになりました`;
+  }
+
+  function wrap(text, max) {
+    const out = [];
+    for (const part of text.split(/\s+/).filter(Boolean)) {
+      const cs = [...part];
+      for (let i = 0; i < cs.length; i += max) out.push(cs.slice(i, i + max).join(''));
+    }
+    return out.length ? out : [''];
+  }
+  function bubbleSVG(e, x, headTop, color) {
+    const fs = e.small ? 44 : 62;
+    const lines = wrap(e.text, e.small ? 9 : 7);
+    const maxLen = Math.max(...lines.map(l => [...l].length));
+    const w = Math.max(160, maxLen * fs + 80), h = lines.length * fs * 1.25 + 56;
+    const cx = clamp(x, w / 2 + 30, 1080 - w / 2 - 30);
+    const bottom = headTop - 40, top = bottom - h;
+    const tx = clamp(x, cx - w / 2 + 50, cx + w / 2 - 50);
+    const dash = e.small ? 'stroke-dasharray="18 14"' : '';
+    let s = `<path d="M${tx - 34},${bottom - 6} L${tx + 8},${bottom + 52} L${tx + 34},${bottom - 6}Z" fill="#fff" stroke="${OUT}" stroke-width="7" stroke-linejoin="round" ${dash}/>`;
+    s += `<rect x="${cx - w / 2}" y="${top}" width="${w}" height="${h}" rx="${Math.min(60, h / 2)}" fill="#fff" stroke="${OUT}" stroke-width="7" ${dash}/>`;
+    s += `<path d="M${tx - 27},${bottom - 4} L${tx + 27},${bottom - 4}" stroke="#fff" stroke-width="10"/>`;
+    s += `<rect x="${cx - w / 2 + 18}" y="${top + 14}" width="14" height="14" rx="7" fill="${color}"/>`;
+    lines.forEach((l, i) => { s += `<text x="${cx}" y="${top + 28 + fs * 1.25 * (i + 0.78)}" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="${fs}" fill="${e.small ? '#6b5d55' : OUT}">${esc(l)}</text>`; });
+    return { s, ax: tx, ay: bottom + 50 };
+  }
+
+  /* ================= render one frame ================= */
+  function posAt(name, t) {
+    const ks = ep.pos[name];
+    let i = 0;
+    for (let k = 0; k < ks.length; k++) if (ks[k].t <= t) i = k;
+    const k = ks[i], prev = ks[Math.max(0, i - 1)];
+    if (i === 0) return { x: k.x, moving: 0 };
+    const p = seg(t, k.t, k.t + 0.9);
+    return { x: prev.x + (k.x - prev.x) * p, moving: p > 0 && p < 1 ? 1 : 0, since: t - k.t };
+  }
+
+  function render(t) {
+    const ev = ep.events;
+    let idx = -1;
+    for (let i = 0; i < ev.length; i++) if (ev[i].t <= t) idx = i; else break;
+    const cur = ev[idx];
+    const sfxOn = cur && cur.kind === 'sfx';
+    const sfxSince = sfxOn ? t - cur.t : 99;
+    const loud = sfxOn && cur.loud;
+
+    let prop = null, propT = -9;
+    for (let i = 0; i <= idx; i++) if (ev[i].kind === 'prop') { prop = ev[i].prop; propT = ev[i].t; }
+    const pk = prop + '';
+    if ($('prop').dataset.k !== pk) { $('prop').dataset.k = pk; $('prop').innerHTML = prop ? PROPS[prop] : ''; }
+    const ps = clamp((t - propT) / 0.3);
+    $('prop').setAttribute('transform', `translate(545 1690) scale(${prop ? (ps < 1 ? 0.4 + 0.6 * ps + Math.sin(ps * Math.PI) * 0.2 : 1) : 1}) translate(-545 -1690)`);
+
+    const order = Object.values(dogs);
+    order.forEach(dg => {
+      let face = 'ふつう', lastSay = null, lastSayIdx = -1;
+      for (let i = 0; i <= idx; i++) {
+        const e = ev[i];
+        if (e.who !== dg.name) continue;
+        if (e.kind === 'say') { face = e.face; lastSay = e; lastSayIdx = i; }
+        if (e.kind === 'face') face = e.face;
+      }
+      const f = loud ? FACES['びっくり'] : FACES[face];
+      const key = loud ? 'loud' : face;
+      if (dg.faceKey !== key) { dg.faceKey = key; dg.head.innerHTML = dg.d.head(f); }
+
+      const p = posAt(dg.name, t);
+      const since = lastSay ? t - lastSay.t : 99;
+      const hop = since < 0.4 ? Math.sin(Math.PI * since / 0.4) * 22 : 0;
+      const jump = loud && sfxSince < 0.5 ? Math.sin(Math.PI * clamp(sfxSince / 0.3)) * 60 : 0;
+      const run = p.moving ? Math.abs(Math.sin(p.since * 12)) * 40 : 0;
+      const tremble = f.tremble ? Math.sin(t * 70) * 5 : 0;
+      const x = p.x + tremble, y = BASE_Y - hop - jump - run;
+      dg.g.setAttribute('transform', `translate(${x} ${y}) scale(${SCALE})`);
+      const breath = Math.sin(t * 2.4 + p.x) * 0.015;
+      dg.body.setAttribute('transform', `translate(0 300) scale(${1 + breath} ${1 - breath}) translate(0 -300)`);
+      const wagSpeed = f.wag ?? 1;
+      dg.tail.setAttribute('transform', `rotate(${Math.sin(t * (4 + wagSpeed * 6)) * (4 + wagSpeed * 7)} 100 220)`);
+      const wob = since < 1.6 ? Math.sin(since * 16) * Math.exp(-since * 3.2) * 7 : 0;
+      dg.head.setAttribute('transform', `translate(0 ${Math.sin(t * 2.4 + p.x) * 3}) rotate(${(f.tilt || 0) + wob} 0 60)`);
+
+      // bubble: current or previous cut, hidden while off screen
+      const show = lastSay && lastSayIdx >= idx - 1 && p.x < 1100 ? lastSay : null;
+      const headTop = BASE_Y - 230 * SCALE;
+      const bk = show ? show.t + '|' + Math.round(p.x) : '';
+      if (dg.bubKey !== bk) {
+        dg.bubKey = bk;
+        if (show) { const b = bubbleSVG(show, p.x, headTop, dg.d.color); dg.bub.innerHTML = b.s; dg.ax = b.ax; dg.ay = b.ay; }
+        else dg.bub.innerHTML = '';
+      }
+      if (show) {
+        const k = clamp(since / 0.3);
+        const sc = k >= 1 ? 1 : 0.5 + 0.5 * k + Math.sin(k * Math.PI) * 0.15;
+        dg.bub.setAttribute('transform', `translate(${dg.ax} ${dg.ay}) scale(${sc}) translate(${-dg.ax} ${-dg.ay})`);
+      }
+      dg.lastSayT = lastSay ? lastSay.t : -1;
+    });
+    // speaker on top
+    order.sort((a, b) => a.lastSayT - b.lastSayT).forEach(dg => $('bubbles').appendChild(dg.bub));
+
+    const sfx = $('sfx');
+    const sfxText = sfxOn ? cur.text : '';
+    if (sfx.textContent !== sfxText) sfx.textContent = sfxText;
+    const sk = clamp(sfxSince / 0.25);
+    sfx.setAttribute('font-size', Math.min(130, Math.floor(860 / Math.max(1, [...sfxText].length))));
+    sfx.setAttribute('x', clamp(800, 0, 1080 - [...sfxText].length * 60));
+    sfx.setAttribute('transform', `rotate(-8 700 560) translate(700 560) scale(${sk >= 1 ? 1 : 0.4 + 0.6 * sk + Math.sin(sk * Math.PI) * 0.25}) translate(-700 -560)`);
+    const shakeAmt = loud && sfxSince < 0.45 ? Math.sin(sfxSince * 70) * 16 * (1 - sfxSince / 0.45) : 0;
+    $('shake').setAttribute('transform', `translate(${shakeAmt} 0)`);
+    $('flash').setAttribute('opacity', (loud && sfxSince < 0.35 ? 0.6 * (1 - sfxSince / 0.35) : 0).toFixed(3));
+    $('ending').setAttribute('opacity', seg(t, ep.end + 0.2, ep.end + 1).toFixed(3));
+  }
+
+  /* ================= playback & UI ================= */
+  let t = 0, playing = true, last = null;
+  const show = () => {
+    render(t); seek.value = t;
+    timeEl.textContent = `${t.toFixed(1)} / ${ep.dur.toFixed(0)}s`;
+    playBtn.textContent = playing ? '一時停止' : (t >= ep.dur ? 'もう一度' : '再生');
+  };
+  function frame(now) {
+    if (playing) {
+      if (last != null) t += Math.min(0.1, (now - last) / 1000);
+      if (t >= ep.dur) { t = ep.dur; playing = false; }
+      show();
+    }
+    last = now;
+    requestAnimationFrame(frame);
+  }
+  playBtn.addEventListener('click', () => { if (t >= ep.dur) t = 0; playing = !playing; show(); });
+  $('replay').addEventListener('click', () => { t = 0; playing = true; show(); });
+  seek.addEventListener('input', () => { t = +seek.value; show(); });
+
+  const save = () => { try { localStorage.setItem('fuku-john-script', ta.value); } catch (e) {} };
+  const tabs = $('tabs');
+  const markTabs = () => [...tabs.children].forEach((b, i) => b.setAttribute('aria-pressed', String(ta.value === EPISODES[i].text)));
+  const load = src => { ta.value = src; markTabs(); build(src); t = 0; playing = true; show(); };
+  EPISODES.forEach(e => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = e.name;
+    b.addEventListener('click', () => { load(e.text); save(); });
+    tabs.appendChild(b);
+  });
+  $('apply').addEventListener('click', () => { load(ta.value); save(); });
+  ta.addEventListener('input', markTabs);
+
+  $('refBg').textContent = Object.keys(BGS).join('・');
+  $('refFaces').textContent = Object.keys(FACES).join('・');
+  $('refProps').textContent = Object.keys(PROPS).join('・') + '・なし（片づける）';
+
+  let saved = null;
+  try { saved = localStorage.getItem('fuku-john-script'); } catch (e) {}
+  ta.value = saved || EPISODES[0].text;
+  markTabs();
+  build(ta.value);
+
+  window.claude?.hot?.snapshot?.(() => ({ t, src: ta.value }));
+  const start = d => { if (d?.src) { ta.value = d.src; markTabs(); build(ta.value); } t = Math.min(d?.t ?? 0, ep.dur); show(); requestAnimationFrame(frame); };
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
