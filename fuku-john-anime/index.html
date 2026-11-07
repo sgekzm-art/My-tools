@@ -184,31 +184,57 @@
     return s;
   }
 
+  // shaggy outline: like fuzz() but with uneven, longer tufts
+  function shag(cx, cy, rx, ry, n, amp, seed = 1, rot = 0) {
+    const r = i => { const v = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453; return v - Math.floor(v); };
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2 + rot; pts.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); }
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const a = (i - 0.5 + (r(i) - 0.5) * 0.5) / n * Math.PI * 2 + rot;
+      const k = 1 + amp * (0.45 + r(i + 50) * 1.1);
+      d += ` Q${(cx + Math.cos(a) * rx * k).toFixed(1)},${(cy + Math.sin(a) * ry * k).toFixed(1)} ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+    }
+    return d + 'Z';
+  }
+
+  // ふく: longer face, long scruffy grey-and-fawn coat, white beard, upright fuzzy ears
+  const FK = { fawn: '#d6bb93', grey: '#8f8a85', greyL: '#b3ada6', light: '#ece2d2', beard: '#f8f4ec' };
   function fukuHead(o) {
     const ears = o.ears || 'up';
     let s = '';
     const ear = sx => {
       const r = ears === 'up' ? 0 : ears === 'down' ? 62 : 30;
-      return `<g transform="translate(${sx * 112},-78) rotate(${sx * r}) scale(${sx},1)"><path d="M-38,20 Q-50,-95 -12,-150 Q40,-80 38,15Z" ${st(C.greyD)}/><path d="M-20,8 Q-28,-70 -8,-112 Q22,-60 20,5Z" fill="${C.earIn}"/></g>`;
+      return `<g transform="translate(${sx * 104},-112) rotate(${sx * r}) scale(${sx},1)">
+        <path d="M-44,34 Q-58,-90 -12,-166 Q50,-88 44,28Z" ${st(FK.grey)}/>
+        <path d="M-24,18 Q-32,-66 -10,-120 Q26,-62 22,14Z" fill="${C.earIn}"/>
+        <path d="M-12,-166 l-10,-18 M-12,-166 l6,-20 M-30,-110 l-18,-8 M24,-92 l18,-8" stroke="${FK.grey}" stroke-width="6" stroke-linecap="round"/></g>`;
     };
     s += ear(-1) + ear(1);
-    const head = fuzz(0, 0, 168, 142, 30, 0.045);
-    s += `<defs><clipPath id="fukuClip"><path d="${head}"/></clipPath><linearGradient id="fukuGrad" gradientUnits="userSpaceOnUse" x1="0" y1="-150" x2="0" y2="-10"><stop offset="0" stop-color="${C.greyD}"/><stop offset=".45" stop-color="${C.grey}"/><stop offset="1" stop-color="${C.grey}" stop-opacity="0"/></linearGradient></defs>`;
-    s += `<path d="${head}" fill="${C.fawn}"/><g clip-path="url(#fukuClip)"><rect x="-200" y="-160" width="400" height="160" fill="url(#fukuGrad)"/><path d="${fuzz(-150, 40, 40, 60, 10, 0.08)}" fill="${C.fawnD}" opacity=".35"/><path d="${fuzz(150, 40, 40, 60, 10, 0.08)}" fill="${C.fawnD}" opacity=".35"/></g>`;
+    const head = shag(0, -10, 152, 162, 36, 0.085, 3);
+    s += `<defs><clipPath id="fukuClip"><path d="${head}"/></clipPath><linearGradient id="fukuGrad" gradientUnits="userSpaceOnUse" x1="0" y1="-175" x2="0" y2="10"><stop offset="0" stop-color="${FK.grey}"/><stop offset=".5" stop-color="${FK.greyL}"/><stop offset="1" stop-color="${FK.greyL}" stop-opacity="0"/></linearGradient></defs>`;
+    s += `<path d="${head}" fill="${FK.fawn}"/><g clip-path="url(#fukuClip)"><rect x="-200" y="-180" width="400" height="190" fill="url(#fukuGrad)"/>
+      <path d="${shag(-120, 50, 48, 76, 12, 0.18, 5)}" fill="${FK.light}" opacity=".75"/><path d="${shag(120, 50, 48, 76, 12, 0.18, 7)}" fill="${FK.light}" opacity=".75"/>
+      <path d="M-60,-150 l-8,30 M-20,-160 l-4,32 M24,-158 l4,30 M64,-146 l8,28" stroke="${FK.grey}" stroke-width="5" stroke-linecap="round" opacity=".7"/></g>`;
     s += `<path d="${head}" fill="none" stroke="${C.line}" stroke-width="${LW}" stroke-linejoin="round"/>`;
-    if (o.brows === 'angry') s += `<path d="M-95,-58 L-35,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/><path d="M95,-58 L35,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/>`;
-    else if (o.brows === 'sad') s += `<path d="${fuzz(-62, -50, 30, 11, 8, 0.15)}" fill="${C.brow}" transform="rotate(-14 -62 -50)"/><path d="${fuzz(62, -50, 30, 11, 8, 0.15)}" fill="${C.brow}" transform="rotate(14 62 -50)"/>`;
-    else s += `<path d="${fuzz(-62, -52, 30, 12, 8, 0.15)}" fill="${C.brow}"/><path d="${fuzz(62, -52, 30, 12, 8, 0.15)}" fill="${C.brow}"/>`;
-    s += `<path d="${fuzz(0, 58, 88, 62, 16, 0.07)}" fill="${C.white}"/>`;
-    return s + faceParts(o, C.line);
+    // long white beard poking out under the chin
+    s += `<path d="${shag(0, 152, 70, 50, 16, 0.2, 9)}" ${st(FK.beard)}/>`;
+    s += `<path d="${shag(0, 70, 92, 86, 20, 0.12, 11)}" fill="${FK.beard}"/>`;
+    // shaggy eyebrows
+    if (o.brows === 'angry') s += `<path d="M-98,-60 L-34,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/><path d="M98,-60 L34,-36" stroke="${C.line}" stroke-width="9" stroke-linecap="round"/>`;
+    else if (o.brows === 'sad') s += `<path d="${shag(-62, -54, 34, 15, 10, 0.3, 13)}" fill="${FK.light}" transform="rotate(-16 -62 -54)"/><path d="${shag(62, -54, 34, 15, 10, 0.3, 14)}" fill="${FK.light}" transform="rotate(16 62 -54)"/>`;
+    else s += `<path d="${shag(-62, -56, 34, 16, 10, 0.3, 13)}" fill="${FK.light}"/><path d="${shag(62, -56, 34, 16, 10, 0.3, 14)}" fill="${FK.light}"/>`;
+    return s + `<g transform="translate(0 6)">${faceParts(o, C.line)}</g>`;
   }
   const fukuBody = `
-    <path d="${fuzz(0, 205, 118, 100, 22, 0.05)}" ${st(C.fawn)}/>
-    <path d="${fuzz(0, 215, 62, 66, 14, 0.07)}" fill="${C.white}"/>
+    <path d="${shag(0, 208, 116, 102, 28, 0.09, 21)}" ${st(FK.fawn)}/>
+    <path d="${shag(0, 160, 110, 50, 18, 0.1, 22)}" fill="${FK.greyL}" opacity=".6"/>
+    <path d="${shag(0, 222, 64, 72, 16, 0.14, 23)}" fill="${FK.beard}"/>
     <path d="M-92,150 Q0,190 92,150 L96,172 Q0,214 -96,172Z" ${st(C.collar, 5)}/>
-    <g transform="translate(0,205)"><path d="M-30,-11 a12,12 0 1 1 6,-10 h48 a12,12 0 1 1 6,10 a12,12 0 1 1 -6,10 h-48 a12,12 0 1 1 -6,-10Z" ${st(C.tag, 4)}/><text x="0" y="8" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="22" fill="#fff">ふく</text></g>
-    <ellipse cx="-50" cy="292" rx="40" ry="26" ${st(C.white)}/><ellipse cx="50" cy="292" rx="40" ry="26" ${st(C.white)}/>`;
-  const fukuTail = `<path d="M92,238 Q178,236 172,160 Q168,122 136,134 Q128,150 146,160 Q150,196 96,206Z" ${st(C.grey)}/>`;
+    <g transform="translate(0,212)"><path d="M-30,-11 a12,12 0 1 1 6,-10 h48 a12,12 0 1 1 6,10 a12,12 0 1 1 -6,10 h-48 a12,12 0 1 1 -6,-10Z" ${st(C.tag, 4)}/><text x="0" y="8" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="22" fill="#fff">ふく</text></g>
+    <ellipse cx="-50" cy="294" rx="40" ry="26" ${st(FK.beard)}/><ellipse cx="50" cy="294" rx="40" ry="26" ${st(FK.beard)}/>
+    <path d="M-62,284 v14 M-46,282 v16 M38,282 v16 M54,284 v14" stroke="${C.line}" stroke-width="3.5" stroke-linecap="round" opacity=".5"/>`;
+  const fukuTail = `<path d="${shag(150, 180, 34, 62, 12, 0.22, 31, 0.4)}" ${st(FK.grey)}/><path d="M96,232 Q130,230 140,214" fill="none" stroke="${C.line}" stroke-width="6" stroke-linecap="round"/>`;
 
   // ジョン: long-haired chocolate & tan, big feathered floppy ears, blue bandana
   function johnHead(o) {
@@ -237,8 +263,8 @@
   const johnTail = `<path d="M86,232 Q196,250 194,150 Q190,104 150,116 Q174,156 146,192 Q124,214 90,204Z" ${st(C.chocD)}/><path d="M150,140 Q170,170 150,196" fill="none" stroke="${C.choc}" stroke-width="6" stroke-linecap="round"/>`;
 
   const DOGS = {
-    'ふく': { head: fukuHead, body: fukuBody, tail: fukuTail, home: 300, color: '#ff6f9c' },
-    'ジョン': { head: johnHead, body: johnBody, tail: johnTail, home: 790, color: '#3f8fe0' },
+    'ふく': { head: fukuHead, body: fukuBody, tail: fukuTail, home: 300, color: '#ff6f9c', top: 280 },
+    'ジョン': { head: johnHead, body: johnBody, tail: johnTail, home: 790, color: '#3f8fe0', top: 230 },
   };
 
   /* ================= expressions ================= */
@@ -509,7 +535,7 @@
 
       // bubble: current or previous cut, hidden while off screen
       const show = lastSay && lastSayIdx >= idx - 1 && p.x < 1100 ? lastSay : null;
-      const headTop = BASE_Y - 230 * SCALE;
+      const headTop = BASE_Y - dg.d.top * SCALE;
       const bk = show ? show.t + '|' + Math.round(p.x) : '';
       if (dg.bubKey !== bk) {
         dg.bubKey = bk;
