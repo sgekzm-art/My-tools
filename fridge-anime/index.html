@@ -1,44 +1,35 @@
-<title>冷蔵庫のプリンと牛乳</title>
+<title>しゃべるモノ劇場</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
-  /* Layout: one vertical 9:16 "short video" frame, centered, with a slim control bar under it. Deliberately single dark look (video player). */
+  /* Layout: vertical 9:16 film on the left (top on phones), script editor beside it. Single dark "studio" look. */
   :root {
-    --bg: #0d0c10;
-    --panel: #1b1a22;
+    --bg: #121117;
+    --panel: #1d1c24;
+    --line: #2e2c38;
     --fg: #f3f1f6;
-    --muted: #9c98a8;
+    --muted: #a19dac;
     --accent: #e8384f;
     --display: "Mochiy Pop One", "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
     --body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
     color-scheme: dark;
   }
-  html, body { height: 100%; }
   body {
     background: var(--bg);
     color: var(--fg);
     font-family: var(--body);
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 12px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    padding-block: 16px 32px;
   }
-  .frame {
-    flex: 1 1 auto;
-    min-height: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
+  main { display: grid; gap: 20px; max-width: 1200px; margin: 0 auto; }
+  @media (min-width: 900px) { main { grid-template-columns: auto minmax(0, 1fr); align-items: start; } }
+  .film-col { display: flex; flex-direction: column; gap: 10px; align-items: center; }
   svg#film {
-    height: 100%;
-    max-height: 1920px;
+    width: min(100%, calc(80vh * 9 / 16));
     aspect-ratio: 9 / 16;
     max-width: 100%;
     display: block;
@@ -46,190 +37,200 @@
     background: #000;
   }
   .bar {
-    flex: 0 0 auto;
-    width: min(100%, 560px);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--panel);
-    border-radius: 999px;
-    padding: 6px 14px 6px 6px;
-    box-sizing: border-box;
+    width: min(100%, calc(80vh * 9 / 16));
+    min-width: min(100%, 300px);
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border-radius: 999px;
+    padding: 6px 12px 6px 6px; box-sizing: border-box;
   }
-  .bar button {
-    font: 800 14px var(--body);
-    color: var(--fg);
-    background: var(--accent);
-    border: 0;
-    border-radius: 999px;
-    padding: 8px 14px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .bar button.ghost { background: transparent; color: var(--muted); padding-inline: 8px; }
-  .bar button:focus-visible, .bar input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  button { font: 800 14px var(--body); color: var(--fg); border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; background: var(--accent); }
+  button.ghost { background: transparent; color: var(--muted); padding-inline: 8px; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
   .bar input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
-  .bar .time { font: 500 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.2em; text-align: right; }
-  .say { font-family: var(--display); fill: #1f1c26; text-anchor: middle; }
+  .time { font: 500 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.6em; text-align: right; }
+
+  .editor { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  h1 { font: 400 26px var(--display); margin: 0; text-wrap: balance; }
+  .lead { margin: 0; color: var(--muted); line-height: 1.7; max-width: 60ch; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs button { background: var(--panel); border: 1px solid var(--line); font-weight: 500; }
+  .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  textarea {
+    width: 100%; box-sizing: border-box; min-height: 340px; resize: vertical;
+    background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; font: 14px/1.75 var(--mono);
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .msg { color: #ffb3bd; font-size: 13px; margin: 0; }
+  .msg.ok { color: #9fe0b5; }
+  .ref { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; font-size: 13px; line-height: 1.7; }
+  .ref h2 { font: 800 13px var(--body); margin: 0; color: var(--muted); letter-spacing: .06em; }
+  .ref dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; }
+  .ref dt { color: var(--muted); }
+  .ref dd { margin: 0; }
+  code { font-family: var(--mono); background: #2a2833; padding: 1px 5px; border-radius: 5px; }
+  .say { font-family: var(--display); text-anchor: middle; }
 </style>
 
-<div class="frame">
-<svg id="film" viewBox="0 0 1080 1920" role="img" aria-label="冷蔵庫の中でプリンと牛乳が賞味期限の話をする短いアニメ">
-  <defs>
-    <radialGradient id="beam" cx="1" cy="0.45" r="1">
-      <stop offset="0" stop-color="#fffbe8" stop-opacity="0.95"/>
-      <stop offset="0.6" stop-color="#fff3c8" stop-opacity="0.35"/>
-      <stop offset="1" stop-color="#fff3c8" stop-opacity="0"/>
-    </radialGradient>
-    <clipPath id="sceneClip"><rect x="0" y="0" width="1600" height="900"/></clipPath>
-  </defs>
-
-  <rect width="1080" height="1920" fill="#000"/>
-
-  <!-- title card -->
-  <g id="titleCard">
-    <rect x="150" y="200" width="780" height="340" rx="56" fill="#fff"/>
-    <text x="540" y="300" class="say" font-size="70"><tspan fill="#e8384f">プリン</tspan><tspan>と</tspan><tspan fill="#e8384f">牛乳</tspan></text>
-    <text x="540" y="400" class="say" font-size="66">冷蔵庫でこんな話を</text>
-    <text x="540" y="490" class="say" font-size="66">してたんだ</text>
-  </g>
-
-  <!-- scene: drawn at 1600x900, scaled into the frame -->
-  <g transform="translate(40 660) scale(0.625)" clip-path="url(#sceneClip)">
-    <!-- fridge box -->
-    <rect width="1600" height="900" fill="#75778c"/>
-    <polygon points="0,0 260,70 260,600 0,900" fill="#6d6f84"/>
-    <polygon points="1600,0 1340,70 1340,600 1600,900" fill="#6d6f84"/>
-    <polygon points="0,900 260,600 1340,600 1600,900" fill="#65677b"/>
-    <rect x="260" y="70" width="1080" height="530" fill="#84869b"/>
-    <g stroke="#4d4f62" stroke-width="6" fill="none" stroke-linecap="round">
-      <rect x="260" y="70" width="1080" height="530"/>
-      <line x1="0" y1="0" x2="260" y2="70"/>
-      <line x1="1600" y1="0" x2="1340" y2="70"/>
-      <line x1="0" y1="900" x2="260" y2="600"/>
-      <line x1="1600" y1="900" x2="1340" y2="600"/>
-    </g>
-    <!-- shelf rail on back wall -->
-    <line x1="300" y1="380" x2="1300" y2="380" stroke="#77798e" stroke-width="5"/>
-
-    <!-- characters -->
-    <g id="pudding">
-      <g id="puddingBody">
-        <ellipse cx="0" cy="0" rx="195" ry="30" fill="#e3e7ef" stroke="#3b3346" stroke-width="6"/>
-        <path d="M-145 -8 L-108 -240 Q0 -256 108 -240 L145 -8 Q0 10 -145 -8 Z" fill="#f6d36b" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
-        <path d="M-108 -240 Q0 -256 108 -240 L114 -202 Q101 -184 90 -200 Q76 -166 60 -196 Q32 -176 12 -199 Q-16 -168 -40 -197 Q-68 -180 -86 -201 Q-101 -176 -114 -202 Z" fill="#8a4a24" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
-        <ellipse cx="-88" cy="-120" rx="10" ry="34" fill="#fff" opacity="0.55" transform="rotate(10 -88 -120)"/>
-        <g id="puddingFace" transform="translate(0 -110)"></g>
+<main>
+  <div class="film-col">
+    <svg id="film" viewBox="0 0 1080 1920" role="img" aria-label="しゃべる日用品のショートアニメ">
+      <defs><clipPath id="sceneClip"><rect width="1600" height="900"/></clipPath></defs>
+      <rect width="1080" height="1920" fill="#000"/>
+      <g id="titleCard"></g>
+      <g id="sceneWrap" transform="translate(40 660) scale(0.625)" clip-path="url(#sceneClip)">
+        <g id="shake">
+          <g id="bg"></g>
+          <g id="chars"></g>
+          <g id="lines"></g>
+          <text id="sfx" class="say" font-size="104" x="1320" y="190" fill="#fff8d8" stroke="#5b4a44" stroke-width="6" paint-order="stroke"></text>
+        </g>
+        <rect id="flash" width="1600" height="900" fill="#fffdf0" opacity="0"/>
       </g>
-    </g>
+      <g id="ending" opacity="0"></g>
+    </svg>
+    <div class="bar">
+      <button id="play" type="button">一時停止</button>
+      <input id="seek" type="range" min="0" max="20" step="0.01" value="0" aria-label="再生位置">
+      <span class="time" id="time">0.0s</span>
+      <button id="replay" type="button" class="ghost">最初から</button>
+    </div>
+  </div>
 
-    <g id="milk">
-      <g id="milkBody">
-        <rect x="-66" y="-452" width="132" height="34" rx="6" fill="#f5f6fa" stroke="#3b3346" stroke-width="6"/>
-        <path d="M-112 -340 L-62 -420 L62 -420 L112 -340 Z" fill="#e4e7f0" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
-        <rect x="-112" y="-340" width="224" height="340" rx="14" fill="#f5f6fa" stroke="#3b3346" stroke-width="6"/>
-        <rect x="-109" y="-150" width="218" height="104" fill="#5b8fd6"/>
-        <line x1="-109" y1="-150" x2="109" y2="-150" stroke="#3b3346" stroke-width="4"/>
-        <line x1="-109" y1="-46" x2="109" y2="-46" stroke="#3b3346" stroke-width="4"/>
-        <text x="0" y="-80" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="50" fill="#fff" letter-spacing="4">MILK</text>
-        <ellipse cx="72" cy="-305" rx="16" ry="11" fill="#3b3346" opacity="0.8"/>
-        <g id="milkFace" transform="translate(0 -235)"></g>
-      </g>
-    </g>
-
-    <!-- light from the opened door -->
-    <rect id="light" width="1600" height="900" fill="url(#beam)" opacity="0"/>
-    <rect id="dark" width="1600" height="900" fill="#14131c" opacity="0"/>
-
-    <!-- speech -->
-    <text id="pSay" class="say" font-size="80" x="560" y="230"></text>
-    <text id="mSay" class="say" font-size="80" x="1040" y="200"></text>
-    <text id="sfx" class="say" font-size="96" x="1350" y="170" fill="#fff8d8" stroke="#3b3346" stroke-width="5" paint-order="stroke" transform="rotate(-8 1350 170)"></text>
-
-    <!-- hand -->
-    <g id="hand">
-      <rect x="40" y="-48" width="900" height="96" rx="48" fill="#f2c7a5" stroke="#3b3346" stroke-width="6"/>
-      <rect x="40" y="-52" width="70" height="104" rx="14" fill="#dfe4ee" stroke="#3b3346" stroke-width="6"/>
-      <path d="M45 -60 C-10 -80 -70 -60 -78 -10 C-84 40 -40 72 20 64 C50 60 52 30 45 20 Z" fill="#f2c7a5" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
-      <path d="M-40 -38 q-26 6 -34 26 M-44 2 q-24 6 -30 22 M-30 34 q-18 6 -22 18" stroke="#3b3346" stroke-width="5" fill="none" stroke-linecap="round"/>
-    </g>
-
-  </g>
-
-  <!-- ending caption -->
-  <g id="ending" opacity="0">
-    <text x="540" y="1360" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="44" fill="#fff">このあと牛乳は</text>
-    <text x="540" y="1425" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="44" fill="#fff">ホットミルクになりました</text>
-    <text x="540" y="1560" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="56" fill="#e8384f">おわり</text>
-  </g>
-</svg>
-</div>
-
-<div class="bar">
-  <button id="play" type="button">一時停止</button>
-  <input id="seek" type="range" min="0" max="25" step="0.01" value="0" aria-label="再生位置">
-  <span class="time" id="time">0.0 / 25s</span>
-  <button id="replay" type="button" class="ghost">最初から</button>
-</div>
+  <section class="editor">
+    <h1>しゃべるモノ劇場</h1>
+    <p class="lead">台本を書き換えて「反映して再生」を押すと、そのままアニメになります。完成したら全画面にして画面録画すれば、縦型ショート動画として使えます。</p>
+    <div class="tabs" id="tabs" role="group" aria-label="サンプル台本"></div>
+    <label for="script" class="lead">台本</label>
+    <textarea id="script" spellcheck="false"></textarea>
+    <div class="row">
+      <button id="apply" type="button">反映して再生</button>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
+    <div class="ref">
+      <h2>台本の書き方</h2>
+      <dl>
+        <dt><code>タイトル:</code></dt><dd><code>/</code> で改行、<code>*ことば*</code> で赤文字</dd>
+        <dt><code>背景:</code></dt><dd id="refBg"></dd>
+        <dt><code>キャラ:</code></dt><dd id="refChars"></dd>
+        <dt><code>名前: セリフ</code></dt><dd>最後に <code>[表情]</code> をつけられます：<span id="refFaces"></span></dd>
+        <dt><code>音:</code></dt><dd>効果音（例 <code>音: ガチャ</code>）。全員びっくり顔になります</dd>
+        <dt><code>退場:</code></dt><dd>キャラが右へ去ります（例 <code>退場: 牛乳</code>）</dd>
+        <dt><code>おわり:</code></dt><dd>最後のテロップ。<code>/</code> で改行</dd>
+      </dl>
+    </div>
+  </section>
+</main>
 
 <script>
 (() => {
-  const DUR = 25;
   const $ = id => document.getElementById(id);
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
   const seg = (t, a, b) => ease(clamp((t - a) / (b - a)));
-  const INK = '#3b3346';
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const OL = '#5b4a44', INK = '#4a3c36';
+  const st = `stroke="${OL}" stroke-width="6" stroke-linejoin="round"`;
 
-  // Story beats. pt/mt = pudding/milk line ("" clears). pf/mf = faces.
-  // Face: "eyes mouth [extras...]"
-  const beats = [
-    { t: 0,    pt: '',               mt: '',             pf: 'dot smile',            mf: 'dot smile' },
-    { t: 1.0,  pt: 'ねえ',           who: 'p' },
-    { t: 2.4,  mt: 'ん？',           who: 'm', mf: 'dot o' },
-    { t: 3.8,  pt: '賞味期限いつ？', mt: '',  who: 'p', pf: 'dot smile', mf: 'dot smile' },
-    { t: 6.0,  mt: '…それきく？',    who: 'm', mf: 'dot wavy sweat' },
-    { t: 7.8,  pt: '',  mt: 'きのう', who: 'm', mf: 'shut flat sweat' },
-    { t: 9.4,  pt: '……',            who: 'p', pf: 'wide flat sweat' },
-    { t: 11.0, pt: 'わたしあさって', who: 'p', pf: 'happy grin blush', mt: '' , mf: 'dot flat' },
-    { t: 12.6, mt: 'うらやましい',   who: 'm', mf: 'teary wavy' },
-    { t: 14.0, pt: '', mt: '', sfx: 'ガチャ', who: 'both', pf: 'wide o shock', mf: 'wide o shock' },
-    { t: 15.0, sfx: '' },
-    { t: 16.3, mt: 'えっ ぼく？',    who: 'm', mf: 'wide o sweat', pf: 'wide flat' },
-    { t: 18.2, mt: '',  pf: 'dot flat' },
-    { t: 19.2, pt: '……',            who: 'p' },
-    { t: 20.6, pt: 'さみしい',       who: 'p', pf: 'teary wavy' },
-  ];
-  // resolve full state per beat
-  let cur = { pt: '', mt: '', sfx: '', pf: '', mf: '' };
-  const states = beats.map(b => (cur = { ...cur, ...b }));
-  const stateAt = t => {
-    let s = states[0];
-    for (const st of states) if (st.t <= t) s = st; else break;
-    return s;
-  };
-  const lastSpeak = (t, who) => {
-    let bt = -99;
-    for (const b of beats) { if (b.t > t) break; if (b.who === who || b.who === 'both') bt = b.t; }
-    return bt;
+  /* ---------- characters (base at 0,0, drawn upward) ---------- */
+  const CHARS = {
+    'プリン': { h: 256, face: [0, -110], fs: 1, svg: `
+      <ellipse cx="0" cy="0" rx="195" ry="30" fill="#eef1f6" ${st}/>
+      <path d="M-145 -8 L-108 -240 Q0 -256 108 -240 L145 -8 Q0 10 -145 -8 Z" fill="#fbdc7c" ${st}/>
+      <path d="M-108 -240 Q0 -256 108 -240 L114 -202 Q101 -184 90 -200 Q76 -166 60 -196 Q32 -176 12 -199 Q-16 -168 -40 -197 Q-68 -180 -86 -201 Q-101 -176 -114 -202 Z" fill="#a8643a" ${st}/>
+      <ellipse cx="-88" cy="-120" rx="10" ry="34" fill="#fff" opacity=".6" transform="rotate(10 -88 -120)"/>` },
+    '牛乳': { h: 452, face: [0, -235], fs: 1, svg: `
+      <rect x="-66" y="-452" width="132" height="34" rx="6" fill="#fbfcff" ${st}/>
+      <path d="M-112 -340 L-62 -420 L62 -420 L112 -340 Z" fill="#eaedf5" ${st}/>
+      <rect x="-112" y="-340" width="224" height="340" rx="14" fill="#fbfcff" ${st}/>
+      <rect x="-109" y="-150" width="218" height="104" fill="#86b3ea"/>
+      <text x="0" y="-80" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="50" fill="#fff" letter-spacing="4">MILK</text>
+      <rect x="-112" y="-340" width="224" height="340" rx="14" fill="none" ${st}/>
+      <ellipse cx="72" cy="-305" rx="16" ry="11" fill="${OL}" opacity=".75"/>` },
+    '食パン': { h: 310, face: [0, -150], fs: 1, svg: `
+      <path d="M-135 0 L-135 -195 C-185 -205 -180 -305 -95 -300 Q0 -320 95 -300 C180 -305 185 -205 135 -195 L135 0 Q0 8 -135 0 Z" fill="#e2a764" ${st}/>
+      <path d="M-110 -14 L-110 -205 C-150 -215 -150 -278 -88 -276 Q0 -293 88 -276 C150 -278 150 -215 110 -205 L110 -14 Z" fill="#fdebc8"/>` },
+    'マグカップ': { h: 330, face: [-15, -125], fs: 1, svg: `
+      <path d="M80 -190 C178 -195 178 -45 80 -50" fill="none" stroke="${OL}" stroke-width="34" stroke-linecap="round"/>
+      <path d="M80 -190 C178 -195 178 -45 80 -50" fill="none" stroke="#f7c3cd" stroke-width="20" stroke-linecap="round"/>
+      <rect x="-120" y="-240" width="210" height="240" rx="28" fill="#f7c3cd" ${st}/>
+      <ellipse cx="-15" cy="-238" rx="96" ry="14" fill="#8f5c3e" ${st}/>
+      <path d="M-70 -275 q-16 -24 0 -48 q16 -24 0 -48 M20 -270 q-16 -24 0 -48 q16 -24 0 -48" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".75"/>
+      <path d="M-82 -40 c-10 -14 -30 -2 -18 12 l18 14 l18 -14 c12 -14 -8 -26 -18 -12 z" fill="#fff" opacity=".85"/>` },
+    '消しゴム': { h: 300, face: [0, -238], fs: .85, svg: `
+      <rect x="-105" y="-300" width="210" height="300" rx="22" fill="#ffffff" ${st}/>
+      <rect x="-109" y="-178" width="218" height="150" fill="#8bbbe9" ${st}/>
+      <text x="0" y="-92" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="38" fill="#fff">ERASER</text>` },
+    'えんぴつ': { h: 480, face: [0, -250], fs: .78, svg: `
+      <path d="M-52 -380 L0 -480 L52 -380 Z" fill="#f6dcb4" ${st}/>
+      <path d="M-17 -446 L0 -480 L17 -446 Z" fill="${OL}"/>
+      <rect x="-52" y="-380" width="104" height="322" fill="#ffd66b" ${st}/>
+      <path d="M-17 -376 V-62 M17 -376 V-62" stroke="#ecb94c" stroke-width="5"/>
+      <rect x="-56" y="-62" width="112" height="30" fill="#ccd1da" ${st}/>
+      <rect x="-52" y="-34" width="104" height="34" rx="10" fill="#f6a7b6" ${st}/>` },
   };
 
-  function faceSVG(spec, wide) {
+  /* ---------- backgrounds (1600x900) ---------- */
+  const BGS = {
+    '冷蔵庫': { floor: 770, text: '#2c2632', svg: `
+      <rect width="1600" height="900" fill="#c8deeb"/>
+      <polygon points="0,0 260,70 260,600 0,900" fill="#b9d3e3"/>
+      <polygon points="1600,0 1340,70 1340,600 1600,900" fill="#b9d3e3"/>
+      <polygon points="0,900 260,600 1340,600 1600,900" fill="#adc9db"/>
+      <rect x="260" y="70" width="1080" height="530" fill="#d6e8f2"/>
+      <g stroke="#93b3c7" stroke-width="6" fill="none" stroke-linecap="round">
+        <rect x="260" y="70" width="1080" height="530"/>
+        <path d="M0 0 L260 70 M1600 0 L1340 70 M0 900 L260 600 M1600 900 L1340 600"/>
+      </g>
+      <line x1="300" y1="380" x2="1300" y2="380" stroke="#bcd3e1" stroke-width="5"/>` },
+    '台所': { floor: 790, text: '#2c2632', svg: `
+      <rect width="1600" height="900" fill="#fae5e8"/>
+      <g stroke="#f1cfd5" stroke-width="4">${Array.from({ length: 20 }, (_, i) => `<line x1="${i * 84}" y1="0" x2="${i * 84}" y2="640"/>`).join('')}${Array.from({ length: 8 }, (_, i) => `<line x1="0" y1="${i * 84}" x2="1600" y2="${i * 84}"/>`).join('')}</g>
+      <rect x="0" y="640" width="1600" height="260" fill="#f5f1ed"/>
+      <rect x="0" y="632" width="1600" height="18" fill="#e6ddd6"/>
+      <rect x="1180" y="120" width="300" height="210" rx="22" fill="#fff" stroke="#e7cfd3" stroke-width="8"/>
+      <rect x="1215" y="155" width="170" height="140" rx="10" fill="#f3e9ea"/>
+      <circle cx="1430" cy="190" r="14" fill="#e7cfd3"/><circle cx="1430" cy="250" r="14" fill="#e7cfd3"/>` },
+    '机の上': { floor: 790, text: '#2c2632', svg: `
+      <rect width="1600" height="900" fill="#fbf1e2"/>
+      <rect x="1000" y="90" width="380" height="270" fill="#d4ebf7" stroke="#d2b896" stroke-width="12"/>
+      <path d="M1190 90 V360 M1000 225 H1380" stroke="#d2b896" stroke-width="10"/>
+      <ellipse cx="1110" cy="170" rx="48" ry="18" fill="#fff"/>
+      <rect x="0" y="640" width="1600" height="260" fill="#ebcba3"/>
+      <rect x="0" y="632" width="1600" height="22" fill="#dcb488"/>` },
+    '夜の机': { floor: 790, text: '#f5f1ff', svg: `
+      <rect width="1600" height="900" fill="#3c4064"/>
+      <rect x="1000" y="90" width="380" height="270" fill="#252945" stroke="#5f5a80" stroke-width="12"/>
+      <path d="M1190 90 V360 M1000 225 H1380" stroke="#5f5a80" stroke-width="10"/>
+      <circle cx="1100" cy="160" r="38" fill="#fff3c4"/><circle cx="1116" cy="150" r="34" fill="#252945"/>
+      <g fill="#fff3c4"><circle cx="1290" cy="140" r="5"/><circle cx="1330" cy="290" r="4"/><circle cx="1060" cy="300" r="4"/></g>
+      <ellipse cx="300" cy="120" rx="260" ry="200" fill="#fff6d6" opacity=".08"/>
+      <rect x="0" y="640" width="1600" height="260" fill="#5b5577"/>
+      <rect x="0" y="632" width="1600" height="22" fill="#4b4568"/>` },
+  };
+
+  /* ---------- faces ---------- */
+  const FACES = {
+    'ふつう': 'dot smile', 'にこにこ': 'happy grin blush', 'てれ': 'happy smile blush',
+    'びっくり': 'wide o', 'あせ': 'dot wavy sweat', 'なみだ': 'teary wavy',
+    'つらい': 'shut flat sweat', 'じとー': 'line flat', 'ねむい': 'line o',
+  };
+  function faceSVG(spec) {
     const [eyes, mouth, ...extra] = spec.split(' ');
-    const E = wide ? 46 : 42;
-    let s = '';
+    const E = 44;
     const eye = sx => {
       const x = sx * E;
       switch (eyes) {
         case 'wide': return `<circle cx="${x}" cy="0" r="17" fill="${INK}"/><circle cx="${x - 5}" cy="-6" r="6" fill="#fff"/>`;
         case 'shut': return `<path d="M${x - 12 * sx} -9 L${x + 8 * sx} 0 L${x - 12 * sx} 9" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
         case 'happy': return `<path d="M${x - 14} 6 Q${x} -12 ${x + 14} 6" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+        case 'line': return `<path d="M${x - 14} 0 H${x + 14}" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>`;
         case 'teary': return `<circle cx="${x}" cy="0" r="16" fill="${INK}"/><circle cx="${x - 5}" cy="-6" r="6" fill="#fff"/><circle cx="${x + 5}" cy="5" r="3" fill="#fff"/><path d="M${x} 18 q-6 16 0 28 q6 -12 0 -28" fill="#8fc6f2"/>`;
         default: return `<circle cx="${x}" cy="0" r="9" fill="${INK}"/>`;
       }
     };
-    s += eye(-1) + eye(1);
-    const m = 'stroke="' + INK + '" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+    let s = eye(-1) + eye(1);
+    const m = `stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"`;
     switch (mouth) {
       case 'flat': s += `<path d="M-12 30 L12 30" ${m}/>`; break;
       case 'o': s += `<ellipse cx="0" cy="32" rx="9" ry="12" fill="${INK}"/>`; break;
@@ -243,87 +244,235 @@
     return s;
   }
 
-  const els = {
-    pudding: $('pudding'), puddingBody: $('puddingBody'), pFace: $('puddingFace'),
-    milk: $('milk'), milkBody: $('milkBody'), mFace: $('milkFace'),
-    pSay: $('pSay'), mSay: $('mSay'), sfx: $('sfx'),
-    hand: $('hand'), light: $('light'), dark: $('dark'), ending: $('ending'),
-  };
-  const cache = {};
-  const setFace = (key, el, spec, wide) => { if (cache[key] !== spec) { cache[key] = spec; el.innerHTML = faceSVG(spec, wide); } };
-  const setText = (key, el, txt) => { if (cache[key] !== txt) { cache[key] = txt; el.textContent = txt; } };
-  const pop = (el, x, y, since) => {
-    const k = clamp(since / 0.28);
-    const sc = k >= 1 ? 1 : 0.55 + 0.45 * k + Math.sin(k * Math.PI) * 0.18;
-    el.setAttribute('transform', `translate(${x} ${y}) scale(${sc}) translate(${-x} ${-y})`);
-  };
+  /* ---------- sample scripts ---------- */
+  const SAMPLES = [
+    { name: 'プリンと牛乳', text: `タイトル: *プリン*と*牛乳*/冷蔵庫でこんな話を/してたんだ
+背景: 冷蔵庫
+キャラ: プリン, 牛乳
+プリン: ねえ
+牛乳: ん？ [びっくり]
+プリン: 賞味期限いつ？
+牛乳: …それきく？ [あせ]
+牛乳: きのう [つらい]
+プリン: …… [びっくり]
+プリン: わたしあさって [にこにこ]
+牛乳: うらやましい [なみだ]
+音: ガチャ
+牛乳: えっ ぼく？ [びっくり]
+退場: 牛乳
+プリン: ……
+プリン: さみしい [なみだ]
+おわり: このあと牛乳は/ホットミルクになりました` },
+    { name: '食パンとマグカップ', text: `タイトル: *食パン*と*マグカップ*/朝ごはんの前こんな話を/してたんだ
+背景: 台所
+キャラ: 食パン, マグカップ
+マグカップ: おはよ
+食パン: おはよ… [ねむい]
+マグカップ: 今日あついよ [にこにこ]
+食パン: え 天気？ [びっくり]
+マグカップ: ううん わたしが
+食パン: そっちか [じとー]
+音: チーン
+食パン: ぼくの番だ！ [にこにこ]
+マグカップ: それレンジの音
+食パン: …… [つらい]
+おわり: このあと食パンも/ちゃんとこんがり焼かれました` },
+    { name: '消しゴムとえんぴつ', text: `タイトル: *消しゴム*と*えんぴつ*/テスト前の夜こんな話を/してたんだ
+背景: 夜の机
+キャラ: えんぴつ, 消しゴム
+えんぴつ: ねえ
+消しゴム: なに
+えんぴつ: 書くたびに [あせ]
+えんぴつ: 消されてる気がする [なみだ]
+消しゴム: 消してるからね [じとー]
+えんぴつ: ぼくのせい？ [びっくり]
+消しゴム: ……
+消しゴム: 半分はね [にこにこ]
+えんぴつ: やさしい [てれ]
+おわり: 消しゴムは今夜/ちょっとだけ小さくなりました` },
+  ];
 
-  const P = { x: 560, y: 760 }, M = { x: 1040, y: 760 };
-
-  function render(t) {
-    const s = stateAt(t);
-    const shock = seg(t, 14.0, 14.12) * (1 - seg(t, 14.25, 14.5));
-
-    // pudding: wobble after speaking, gentle breath otherwise
-    const ps = t - lastSpeak(t, 'p');
-    const wob = ps >= 0 && ps < 2 ? Math.sin(ps * 22) * Math.exp(-ps * 3.5) * 0.07 : 0;
-    const breath = Math.sin(t * 2.2) * 0.012;
-    els.pudding.setAttribute('transform', `translate(${P.x} ${P.y - shock * 40})`);
-    els.puddingBody.setAttribute('transform', `scale(${1 + wob - breath} ${1 - wob + breath})`);
-
-    // milk: little hop when speaking, then lifted out by the hand
-    const ms = t - lastSpeak(t, 'm');
-    const hop = ms >= 0 && ms < 0.4 ? Math.sin(Math.PI * ms / 0.4) * 22 : 0;
-    const grab = seg(t, 16.9, 18.0);
-    const mx = M.x + grab * 900, my = M.y - hop - shock * 40 - grab * 260;
-    const tilt = grab * 14 + Math.sin(t * 1.9 + 1) * 1.2;
-    els.milk.setAttribute('transform', `translate(${mx} ${my}) rotate(${tilt})`);
-
-    // hand reaches in from the right, grabs, pulls out
-    const reach = seg(t, 15.2, 16.1);
-    const hx = 1720 - reach * (1720 - (M.x + 150)) + grab * 900;
-    const hy = M.y - 170 - grab * 260;
-    els.hand.setAttribute('transform', `translate(${hx} ${hy}) rotate(${grab * 14})`);
-    els.hand.style.display = t > 15.1 && t < 18.2 ? '' : 'none';
-
-    // door light
-    const lightOn = seg(t, 13.95, 14.25) * (1 - seg(t, 17.9, 18.25));
-    els.light.setAttribute('opacity', (lightOn * 0.85).toFixed(3));
-    els.dark.setAttribute('opacity', (seg(t, 18.1, 18.4) * 0.28 * (1 - seg(t, 22.5, 24))).toFixed(3));
-
-    // faces & lines
-    setFace('pf', els.pFace, s.pf, false);
-    setFace('mf', els.mFace, s.mf, true);
-    setText('pt', els.pSay, s.pt);
-    setText('mt', els.mSay, s.mt);
-    setText('sfx', els.sfx, s.sfx);
-    pop(els.pSay, P.x, 230, ps);
-    els.mSay.setAttribute('x', mx);
-    pop(els.mSay, mx, 200 + (my - M.y), ms);
-    els.mSay.setAttribute('y', 200 + (my - M.y));
-    pop(els.sfx, 1350, 170, t - 14.0);
-
-    els.ending.setAttribute('opacity', seg(t, 22.2, 23.0).toFixed(3));
+  /* ---------- parser ---------- */
+  function parse(src) {
+    const ep = { title: [], bg: '冷蔵庫', chars: [], events: [], ending: [], errors: [] };
+    src.split(/\r?\n/).forEach((raw, i) => {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) return;
+      const m = line.match(/^([^:：]+)[:：]\s*(.*)$/);
+      if (!m) { ep.errors.push(`${i + 1}行目: 「名前: セリフ」の形で書いてください`); return; }
+      const key = m[1].trim(), val = m[2].trim();
+      if (key === 'タイトル') ep.title = val.split('/').map(s => s.trim()).filter(Boolean);
+      else if (key === '背景') { if (BGS[val]) ep.bg = val; else ep.errors.push(`${i + 1}行目: 背景「${val}」はありません`); }
+      else if (key === 'キャラ') {
+        ep.chars = val.split(/[,、，]/).map(s => s.trim()).filter(Boolean);
+        ep.chars.forEach(c => { if (!CHARS[c]) ep.errors.push(`${i + 1}行目: キャラ「${c}」はありません`); });
+        ep.chars = ep.chars.filter(c => CHARS[c]).slice(0, 3);
+      }
+      else if (key === '音') ep.events.push({ kind: 'sfx', text: val });
+      else if (key === '退場') { if (ep.chars.includes(val)) ep.events.push({ kind: 'exit', who: val }); else ep.errors.push(`${i + 1}行目: 「${val}」はキャラにいません`); }
+      else if (key === 'おわり') ep.ending = val.split('/').map(s => s.trim()).filter(Boolean);
+      else if (ep.chars.includes(key)) {
+        let text = val, face = 'ふつう';
+        const fm = val.match(/^(.*?)\s*[\[［]([^\]］]+)[\]］]\s*$/);
+        if (fm) { text = fm[1]; if (FACES[fm[2]]) face = fm[2]; else ep.errors.push(`${i + 1}行目: 表情「${fm[2]}」はありません`); }
+        ep.events.push({ kind: 'say', who: key, text, face });
+      }
+      else ep.errors.push(`${i + 1}行目: 「${key}」はキャラにいません（キャラ: の行に書いてください）`);
+    });
+    if (!ep.chars.length) ep.errors.push('キャラ: の行がありません');
+    let t = 0.8;
+    ep.events.forEach(e => {
+      e.t = t;
+      e.d = e.kind === 'say' ? Math.max(1.3, 0.9 + 0.14 * [...e.text].length) : e.kind === 'sfx' ? 1.3 : 1.1;
+      t += e.d;
+    });
+    ep.end = t;
+    ep.dur = t + (ep.ending.length ? 3.2 : 1);
+    return ep;
   }
 
-  // playback
-  const seek = $('seek'), playBtn = $('play'), timeEl = $('time');
-  let t = 0, playing = true, last = null;
-  const show = () => { render(t); seek.value = t; timeEl.textContent = `${t.toFixed(1)} / ${DUR}s`; playBtn.textContent = playing ? '一時停止' : (t >= DUR ? 'もう一度' : '再生'); };
+  /* ---------- building the scene ---------- */
+  const NS = 'http://www.w3.org/2000/svg';
+  const seek = $('seek'), playBtn = $('play'), timeEl = $('time'), ta = $('script');
+  let ep, actors = [];
+  function titleSVG(lines) {
+    if (!lines.length) return '';
+    const len = Math.max(...lines.map(l => [...l.replace(/\*/g, '')].length));
+    const fs = Math.min(70, Math.floor(700 / len));
+    const lh = fs * 1.35, h = lines.length * lh + 90, y0 = 380 - h / 2;
+    let s = `<rect x="140" y="${y0}" width="800" height="${h}" rx="56" fill="#fff"/>`;
+    lines.forEach((l, i) => {
+      const parts = l.split('*').map((p, j) => p ? `<tspan fill="${j % 2 ? '#e8384f' : '#2a2430'}">${esc(p)}</tspan>` : '').join('');
+      s += `<text x="540" y="${y0 + 45 + lh * (i + 0.78)}" class="say" font-size="${fs}">${parts}</text>`;
+    });
+    return s;
+  }
+  function build(src) {
+    ep = parse(src);
+    $('titleCard').innerHTML = titleSVG(ep.title);
+    const bg = BGS[ep.bg];
+    $('bg').innerHTML = bg.svg;
+    const xs = { 1: [800], 2: [540, 1060], 3: [400, 800, 1200] }[ep.chars.length] || [];
+    $('chars').innerHTML = ''; $('lines').innerHTML = '';
+    actors = ep.chars.map((name, i) => {
+      const c = CHARS[name];
+      const g = document.createElementNS(NS, 'g');
+      g.innerHTML = `<g class="body">${c.svg}<g class="face" transform="translate(${c.face[0]} ${c.face[1]}) scale(${c.fs})"></g></g>`;
+      $('chars').appendChild(g);
+      const tx = document.createElementNS(NS, 'text');
+      tx.setAttribute('class', 'say'); tx.setAttribute('fill', bg.text);
+      $('lines').appendChild(tx);
+      return { name, c, g, body: g.querySelector('.body'), face: g.querySelector('.face'), tx, x: xs[i], y: bg.floor, faceKey: '', txKey: null, width: 1600 / Math.max(2, ep.chars.length) - 60 };
+    });
+    $('ending').innerHTML = ep.ending.map((l, i) => `<text x="540" y="${1340 + i * 66}" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="44" fill="#fff">${esc(l)}</text>`).join('')
+      + (ep.ending.length ? `<text x="540" y="${1360 + ep.ending.length * 66 + 60}" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="56" fill="#e8384f">おわり</text>` : '');
+    seek.max = ep.dur.toFixed(2);
+    const m = $('msg');
+    m.className = 'msg' + (ep.errors.length ? '' : ' ok');
+    m.textContent = ep.errors.length ? ep.errors.slice(0, 3).join(' / ') : `${ep.events.length}カット・${ep.dur.toFixed(0)}秒のアニメになりました`;
+  }
+
+  /* ---------- rendering one frame ---------- */
+  function render(t) {
+    const ev = ep.events;
+    let idx = -1;
+    for (let i = 0; i < ev.length; i++) if (ev[i].t <= t) idx = i; else break;
+    const cur = ev[idx];
+    const sfxOn = cur && cur.kind === 'sfx';
+    const sfxSince = sfxOn ? t - cur.t : 99;
+
+    actors.forEach(a => {
+      let face = 'ふつう', lastSay = null, lastSayIdx = -1, exit = null;
+      for (let i = 0; i <= idx; i++) {
+        const e = ev[i];
+        if (e.who !== a.name) continue;
+        if (e.kind === 'say') { face = e.face; lastSay = e; lastSayIdx = i; }
+        if (e.kind === 'exit') exit = e;
+      }
+      let spec = FACES[face];
+      if (sfxOn) spec = 'wide o shock';
+      if (a.faceKey !== spec) { a.faceKey = spec; a.face.innerHTML = faceSVG(spec); }
+
+      const since = lastSay ? t - lastSay.t : 99;
+      const wob = since < 2 ? Math.sin(since * 22) * Math.exp(-since * 3.5) * 0.06 : 0;
+      const hop = since < 0.4 ? Math.sin(Math.PI * since / 0.4) * 18 : 0;
+      const jump = sfxSince < 0.5 ? Math.sin(Math.PI * clamp(sfxSince / 0.3)) * 40 : 0;
+      const breath = Math.sin(t * 2.2 + a.x) * 0.012;
+      const out = exit ? seg(t, exit.t, exit.t + 1.0) : 0;
+      const ex = exit ? Math.abs(Math.sin((t - exit.t) * 9)) * 26 * (1 - out) : 0;
+      const x = a.x + out * 1300, y = a.y - hop - jump - ex;
+      a.g.setAttribute('transform', `translate(${x} ${y})`);
+      a.body.setAttribute('transform', `scale(${1 + wob - breath} ${1 - wob + breath})`);
+
+      // a line stays up while it is the current or the previous cut
+      const show = lastSay && lastSayIdx >= idx - 1 && !exit ? lastSay.text : '';
+      if (a.txKey !== show) {
+        a.txKey = show; a.tx.textContent = show;
+        a.tx.setAttribute('font-size', Math.min(80, Math.floor(a.width / Math.max(1, [...show].length))));
+      }
+      const ty = Math.max(150, a.y - a.c.h - 60);
+      const k = clamp(since / 0.28);
+      const sc = k >= 1 ? 1 : 0.55 + 0.45 * k + Math.sin(k * Math.PI) * 0.18;
+      a.tx.setAttribute('x', a.x); a.tx.setAttribute('y', ty);
+      a.tx.setAttribute('transform', `translate(${a.x} ${ty}) scale(${sc}) translate(${-a.x} ${-ty})`);
+    });
+
+    const sfx = $('sfx');
+    const sfxText = sfxOn ? cur.text : '';
+    if (sfx.textContent !== sfxText) sfx.textContent = sfxText;
+    const sk = clamp(sfxSince / 0.25);
+    sfx.setAttribute('transform', `rotate(-8 1320 190) translate(1320 190) scale(${sk >= 1 ? 1 : 0.5 + 0.5 * sk + Math.sin(sk * Math.PI) * 0.2}) translate(-1320 -190)`);
+    const shake = sfxSince < 0.4 ? Math.sin(sfxSince * 70) * 10 * (1 - sfxSince / 0.4) : 0;
+    $('shake').setAttribute('transform', `translate(${shake} 0)`);
+    $('flash').setAttribute('opacity', (sfxSince < 0.35 ? 0.45 * (1 - sfxSince / 0.35) : 0).toFixed(3));
+    $('ending').setAttribute('opacity', seg(t, ep.end, ep.end + 0.8).toFixed(3));
+  }
+
+  /* ---------- playback & UI ---------- */
+  let t = 0, playing = true, last = null, active = 0;
+  const show = () => {
+    render(t); seek.value = t;
+    timeEl.textContent = `${t.toFixed(1)} / ${ep.dur.toFixed(0)}s`;
+    playBtn.textContent = playing ? '一時停止' : (t >= ep.dur ? 'もう一度' : '再生');
+  };
   function frame(now) {
     if (playing) {
       if (last != null) t += (now - last) / 1000;
-      if (t >= DUR) { t = DUR; playing = false; }
+      if (t >= ep.dur) { t = ep.dur; playing = false; }
       show();
     }
     last = now;
     requestAnimationFrame(frame);
   }
-  playBtn.addEventListener('click', () => { if (t >= DUR) t = 0; playing = !playing; show(); });
+  playBtn.addEventListener('click', () => { if (t >= ep.dur) t = 0; playing = !playing; show(); });
   $('replay').addEventListener('click', () => { t = 0; playing = true; show(); });
   seek.addEventListener('input', () => { t = +seek.value; show(); });
-  window.claude?.hot?.snapshot?.(() => ({ t }));
-  const start = d => { t = d?.t ?? 0; show(); requestAnimationFrame(frame); };
+
+  const save = () => { try { localStorage.setItem('mono-script', ta.value); } catch (e) {} };
+  $('apply').addEventListener('click', () => { build(ta.value); save(); markTabs(); t = 0; playing = true; show(); });
+
+  const tabs = $('tabs');
+  const markTabs = () => [...tabs.children].forEach((b, i) => b.setAttribute('aria-pressed', String(ta.value === SAMPLES[i].text)));
+  SAMPLES.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = s.name;
+    b.addEventListener('click', () => { ta.value = s.text; markTabs(); build(ta.value); save(); t = 0; playing = true; show(); });
+    tabs.appendChild(b);
+  });
+  ta.addEventListener('input', markTabs);
+
+  $('refBg').textContent = Object.keys(BGS).join('・');
+  $('refChars').textContent = Object.keys(CHARS).join('・') + '（3人まで、カンマ区切り）';
+  $('refFaces').textContent = Object.keys(FACES).join('・');
+
+  let saved = null;
+  try { saved = localStorage.getItem('mono-script'); } catch (e) {}
+  ta.value = saved || SAMPLES[0].text;
+  markTabs();
+  build(ta.value);
+
+  window.claude?.hot?.snapshot?.(() => ({ t, src: ta.value }));
+  const start = d => { if (d?.src) { ta.value = d.src; markTabs(); build(ta.value); } t = Math.min(d?.t ?? 0, ep.dur); show(); requestAnimationFrame(frame); };
   window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 })();
 </script>
