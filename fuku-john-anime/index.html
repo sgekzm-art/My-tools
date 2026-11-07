@@ -52,6 +52,11 @@
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
   .msg { color: #ffb3c4; font-size: 13px; margin: 0; }
   .msg.ok { color: #9fe0b5; }
+  .opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; color: var(--muted); }
+  .seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+  .seg button { background: transparent; color: var(--muted); font-weight: 500; padding: 6px 12px; }
+  .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  .hint { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
   dl { margin: 14px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 13px; line-height: 1.7; }
   dt { color: var(--muted); } dd { margin: 0; }
   code { font-family: var(--mono); background: #2a2e3a; padding: 1px 5px; border-radius: 5px; }
@@ -93,6 +98,11 @@
       <div><b style="color:var(--blue)">ジョン</b>食いしん坊・臆病・気が小さい。小声のときは点線のふきだしになる。</div>
     </div>
     <div class="tabs" id="tabs" role="group" aria-label="エピソード"></div>
+    <div class="opts">
+      <span>絵柄</span><div class="seg" id="optStyle" role="group" aria-label="絵柄"></div>
+      <span>声</span><div class="seg" id="optVoice" role="group" aria-label="声"></div>
+    </div>
+    <p class="hint" id="hint">声は「最初から」などのボタンを押すと鳴り始めます。読み上げの声は使っている端末の音声です。</p>
     <details id="editBox">
       <summary>台本を書いて新しい話をつくる</summary>
       <label for="script" class="lead">台本</label>
@@ -267,6 +277,21 @@
     'ジョン': { head: johnHead, body: johnBody, tail: johnTail, home: 790, color: '#3f8fe0', top: 230 },
   };
 
+  /* ================= photo stickers (cut from the LINE photo sets) ================= */
+  const PH_SIZE = {"fuku-06":[588,425],"fuku-12":[566,423],"fuku-14":[417,425],"fuku-17":[290,321],"fuku-21":[592,457],"fuku-22":[557,411],"fuku-23":[289,419],"fuku-24":[479,463],"fuku-25":[558,456],"fuku-28":[366,443],"fuku-29":[377,421],"fuku-32":[528,423],"fuku-33":[404,460],"john-06":[588,425],"john-12":[582,433],"john-14":[468,425],"john-17":[384,318],"john-21":[567,457],"john-22":[566,431],"john-23":[436,419],"john-24":[578,443],"john-25":[668,455],"john-28":[435,437],"john-29":[425,437],"john-32":[582,423]};
+  const PH_FACE = { 'ふつう': 14, 'にこにこ': 17, 'キラキラ': 29, 'よだれ': 29, 'ラブ': 6, 'てれ': 24, 'ドヤ': 28, 'ツン': 33, 'おこ': 22, 'びっくり': 23, 'あせ': 12, 'こわい': 12, 'かなしい': 21, 'なき': 25, 'ねむい': 32 };
+  const PH_PREFIX = { 'ふく': 'fuku', 'ジョン': 'john' };
+  const PH_FLOOR = 1660;
+  function photoFor(name, face) {
+    let key = `${PH_PREFIX[name]}-${String(PH_FACE[face] || 14).padStart(2, '0')}`;
+    if (!PH_SIZE[key]) key = `${PH_PREFIX[name]}-22`;
+    const [w, h] = PH_SIZE[key];
+    const k = Math.min(640 / h, 540 / w);
+    return { href: `img/${key}.webp`, w: w * k, h: h * k };
+  }
+  // preload so expression swaps don't flash
+  Object.keys(PH_SIZE).forEach(k => { const im = new Image(); im.src = `img/${k}.webp`; });
+
   /* ================= expressions ================= */
   const FACES = {
     'ふつう': { eyes: 'open', mouth: 'w' },
@@ -416,6 +441,8 @@
   const seek = $('seek'), playBtn = $('play'), timeEl = $('time'), ta = $('script');
   const SCALE = 1.1, BASE_Y = 1180;
   let ep, dogs = {};
+  let style = 'photo', voice = 'speech';
+  try { style = localStorage.getItem('fj-style') || style; voice = localStorage.getItem('fj-voice') || voice; } catch (e) {}
 
   function titleSVG(t) {
     const len = Math.max(4, [...t].length);
@@ -437,11 +464,12 @@
     dogs = {};
     for (const [name, d] of Object.entries(DOGS)) {
       const g = document.createElementNS(NS, 'g');
-      g.innerHTML = `<g class="tail">${d.tail}</g><g class="body">${d.body}</g><g class="head"></g>`;
+      g.innerHTML = style === 'photo' ? `<g class="photo"><image class="ph" preserveAspectRatio="xMidYMax meet"/></g>`
+        : `<g class="tail">${d.tail}</g><g class="body">${d.body}</g><g class="head"></g>`;
       $('dogs').appendChild(g);
       const b = document.createElementNS(NS, 'g');
       $('bubbles').appendChild(b);
-      dogs[name] = { name, d, g, tail: g.querySelector('.tail'), body: g.querySelector('.body'), head: g.querySelector('.head'), bub: b, faceKey: '', bubKey: null };
+      dogs[name] = { name, d, g, tail: g.querySelector('.tail'), body: g.querySelector('.body'), head: g.querySelector('.head'), photo: g.querySelector('.photo'), img: g.querySelector('.ph'), bub: b, faceKey: '', bubKey: null, faceT: -9, ph: null };
     }
     $('ending').innerHTML = ep.ending.length ? `<rect width="1080" height="1920" fill="#14161d" opacity=".55"/>
       <g transform="rotate(-2 540 960)"><rect x="110" y="${760 - ep.ending.length * 40}" width="860" height="${260 + ep.ending.length * 80}" rx="48" fill="#fff" stroke="${OUT}" stroke-width="8"/>
@@ -516,7 +544,15 @@
       }
       const f = loud ? FACES['びっくり'] : FACES[face];
       const key = loud ? 'loud' : face;
-      if (dg.faceKey !== key) { dg.faceKey = key; dg.head.innerHTML = dg.d.head(f); }
+      if (dg.faceKey !== key) {
+        dg.faceKey = key; dg.faceT = t;
+        if (style === 'photo') {
+          dg.ph = photoFor(dg.name, loud ? 'びっくり' : face);
+          dg.img.setAttribute('href', dg.ph.href);
+          dg.img.setAttribute('x', -dg.ph.w / 2); dg.img.setAttribute('y', -dg.ph.h);
+          dg.img.setAttribute('width', dg.ph.w); dg.img.setAttribute('height', dg.ph.h);
+        } else dg.head.innerHTML = dg.d.head(f);
+      }
 
       const p = posAt(dg.name, t);
       const since = lastSay ? t - lastSay.t : 99;
@@ -524,19 +560,27 @@
       const jump = loud && sfxSince < 0.5 ? Math.sin(Math.PI * clamp(sfxSince / 0.3)) * 60 : 0;
       const run = p.moving ? Math.abs(Math.sin(p.since * 12)) * 40 : 0;
       const tremble = f.tremble ? Math.sin(t * 70) * 5 : 0;
-      const x = p.x + tremble, y = BASE_Y - hop - jump - run;
-      dg.g.setAttribute('transform', `translate(${x} ${y}) scale(${SCALE})`);
+      const x = p.x + tremble, y = (style === 'photo' ? PH_FLOOR : BASE_Y) - hop - jump - run;
       const breath = Math.sin(t * 2.4 + p.x) * 0.015;
+      if (style === 'photo') {
+        const fk = clamp((t - dg.faceT) / 0.25);
+        const pop = fk < 1 ? 0.92 + 0.08 * fk + Math.sin(fk * Math.PI) * 0.06 : 1;
+        const wobP = since < 1.6 ? Math.sin(since * 16) * Math.exp(-since * 3.2) * 3 : 0;
+        dg.g.setAttribute('transform', `translate(${x} ${y})`);
+        dg.photo.setAttribute('transform', `rotate(${wobP}) scale(${pop * (1 + breath)} ${pop * (1 - breath)})`);
+      } else {
+      dg.g.setAttribute('transform', `translate(${x} ${y}) scale(${SCALE})`);
       dg.body.setAttribute('transform', `translate(0 300) scale(${1 + breath} ${1 - breath}) translate(0 -300)`);
       const wagSpeed = f.wag ?? 1;
       dg.tail.setAttribute('transform', `rotate(${Math.sin(t * (4 + wagSpeed * 6)) * (4 + wagSpeed * 7)} 100 220)`);
       const wob = since < 1.6 ? Math.sin(since * 16) * Math.exp(-since * 3.2) * 7 : 0;
       dg.head.setAttribute('transform', `translate(0 ${Math.sin(t * 2.4 + p.x) * 3}) rotate(${(f.tilt || 0) + wob} 0 60)`);
+      }
 
       // bubble: current or previous cut, hidden while off screen
       const show = lastSay && lastSayIdx >= idx - 1 && p.x < 1100 ? lastSay : null;
-      const headTop = BASE_Y - dg.d.top * SCALE;
-      const bk = show ? show.t + '|' + Math.round(p.x) : '';
+      const headTop = style === 'photo' ? Math.max(860, PH_FLOOR - (dg.ph ? dg.ph.h : 500) + 30) : BASE_Y - dg.d.top * SCALE;
+      const bk = show ? show.t + '|' + Math.round(p.x) + '|' + Math.round(headTop) : '';
       if (dg.bubKey !== bk) {
         dg.bubKey = bk;
         if (show) { const b = bubbleSVG(show, p.x, headTop, dg.d.color); dg.bub.innerHTML = b.s; dg.ax = b.ax; dg.ay = b.ay; }
@@ -565,6 +609,74 @@
     $('ending').setAttribute('opacity', seg(t, ep.end + 0.2, ep.end + 1).toFixed(3));
   }
 
+  /* ================= sound ================= */
+  let actx = null, unlocked = false, jaVoice = null;
+  const pickVoice = () => {
+    const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    jaVoice = vs.find(v => /ja[-_]JP/i.test(v.lang)) || null;
+  };
+  if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function unlock() {
+    if (unlocked) return;
+    unlocked = true;
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    try { if (window.speechSynthesis) speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch (e) {}
+  }
+  function tone(freq, start, dur, type = 'triangle', vol = 0.18, slide = 0) {
+    if (!actx) return;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, start);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq * slide), start + dur);
+    g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(vol, start + 0.01); g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    o.connect(g).connect(actx.destination); o.start(start); o.stop(start + dur + 0.02);
+  }
+  function noise(start, dur, vol, lp = 1200) {
+    if (!actx) return;
+    const len = Math.floor(actx.sampleRate * dur), buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = buf; f.type = 'lowpass'; f.frequency.value = lp; g.gain.value = vol;
+    src.connect(f).connect(g).connect(actx.destination); src.start(start);
+  }
+  const speakable = s => s.replace(/[…・「」（）()！？!?〜ー\s]/g, '').length > 0;
+  function sayLine(e) {
+    if (voice === 'off' || !unlocked) return;
+    const fuku = e.who === 'ふく';
+    if (voice === 'speech' && window.speechSynthesis) {
+      if (!speakable(e.text)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(e.text.replace(/…+/g, '、'));
+      u.lang = 'ja-JP'; if (jaVoice) u.voice = jaVoice;
+      u.pitch = fuku ? 1.8 : 1.05; u.rate = fuku ? 1.15 : 0.88; u.volume = e.small ? 0.45 : fuku ? 1 : 0.8;
+      speechSynthesis.speak(u);
+    } else if (actx) {
+      // "わんわん語": one blip per character
+      const chars = [...e.text].filter(c => !/[…・\s、。]/.test(c)).slice(0, 16);
+      const now = actx.currentTime + 0.02, step = fuku ? 0.085 : 0.12, base = fuku ? 760 : 430;
+      chars.forEach((c, i) => tone(base * (0.9 + Math.random() * 0.35) * (/[？?]/.test(c) ? 1.3 : 1), now + i * step, step * 0.8, 'triangle', e.small ? 0.06 : fuku ? 0.16 : 0.12));
+    }
+  }
+  function sfxSound(e) {
+    if (voice === 'off' || !unlocked || !actx) return;
+    const n = actx.currentTime + 0.02, s = e.text;
+    if (/ドーン|ゴロ/.test(s)) { noise(n, /ドーン/.test(s) ? 1.6 : 2.2, 0.9, /ドーン/.test(s) ? 500 : 260); tone(60, n, 1.2, 'sine', 0.4, 0.5); }
+    else if (/ガチャ/.test(s)) { noise(n, 0.06, 0.6, 3000); noise(n + 0.12, 0.08, 0.7, 2400); }
+    else if (/チーン/.test(s)) { tone(1760, n, 1.4, 'sine', 0.25); tone(2640, n, 0.9, 'sine', 0.08); }
+    else if (/もぐ/.test(s)) { for (let i = 0; i < 6; i++) tone(180 + Math.random() * 60, n + i * 0.14, 0.1, 'sine', 0.25); }
+    else tone(520, n, 0.25, 'sine', 0.25, 2);
+  }
+  let lastFired = -1;
+  function fireSounds(prevT, nowT) {
+    for (let i = 0; i < ep.events.length; i++) {
+      const e = ep.events[i];
+      if (e.t > prevT && e.t <= nowT && i > lastFired) {
+        lastFired = i;
+        if (e.kind === 'say') sayLine(e); else if (e.kind === 'sfx') sfxSound(e);
+      }
+    }
+  }
+  const stopSound = () => { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} };
+
   /* ================= playback & UI ================= */
   let t = 0, playing = true, last = null;
   const show = () => {
@@ -574,21 +686,41 @@
   };
   function frame(now) {
     if (playing) {
+      const prevT = t;
       if (last != null) t += Math.min(0.1, (now - last) / 1000);
+      fireSounds(prevT, t);
       if (t >= ep.dur) { t = ep.dur; playing = false; }
       show();
     }
     last = now;
     requestAnimationFrame(frame);
   }
-  playBtn.addEventListener('click', () => { if (t >= ep.dur) t = 0; playing = !playing; show(); });
-  $('replay').addEventListener('click', () => { t = 0; playing = true; show(); });
-  seek.addEventListener('input', () => { t = +seek.value; show(); });
+  const reset = () => { stopSound(); lastFired = -1; };
+  playBtn.addEventListener('click', () => { unlock(); if (t >= ep.dur) { t = 0; reset(); } playing = !playing; if (!playing) stopSound(); show(); });
+  $('replay').addEventListener('click', () => { unlock(); t = 0; reset(); playing = true; show(); });
+  seek.addEventListener('input', () => { t = +seek.value; stopSound(); lastFired = ep.events.findLastIndex(e => e.t <= t); show(); });
+
+  function segButtons(el, items, get, set) {
+    const draw = () => [...el.children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === get())));
+    items.forEach(([v, label]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; b.textContent = label;
+      b.addEventListener('click', () => { unlock(); set(v); draw(); });
+      el.appendChild(b);
+    });
+    draw();
+  }
+  segButtons($('optStyle'), [['photo', '写真'], ['illust', 'イラスト']], () => style, v => {
+    style = v; try { localStorage.setItem('fj-style', v); } catch (e) {}
+    const keep = t; build(ta.value); t = Math.min(keep, ep.dur); show();
+  });
+  segButtons($('optVoice'), [['speech', '読み上げ'], ['babble', 'わんわん語'], ['off', 'なし']], () => voice, v => {
+    voice = v; stopSound(); try { localStorage.setItem('fj-voice', v); } catch (e) {}
+  });
 
   const save = () => { try { localStorage.setItem('fuku-john-script', ta.value); } catch (e) {} };
   const tabs = $('tabs');
   const markTabs = () => [...tabs.children].forEach((b, i) => b.setAttribute('aria-pressed', String(ta.value === EPISODES[i].text)));
-  const load = src => { ta.value = src; markTabs(); build(src); t = 0; playing = true; show(); };
+  const load = src => { unlock(); ta.value = src; markTabs(); build(src); t = 0; lastFired = -1; stopSound(); playing = true; show(); };
   EPISODES.forEach(e => {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = e.name;
