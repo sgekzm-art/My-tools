@@ -11,6 +11,9 @@
 - 書き出したZIPは LINE Creators Market の「ZIPアップロード」で登録できます
 - 作業内容はブラウザに自動保存されます
 
+## 売れ筋分析
+- `line-stamp-analysis/` … 人気LINEスタンプの傾向と、次に作るスタンプの企画（2026年11月）
+
 ## 福 LINEスタンプ
 - `fuku-stamps/` … 写真版（16個＋main/tab、提出用ZIP）
 - `fuku-illust/` … イラスト版（16個＋main/tab、提出用ZIP）
