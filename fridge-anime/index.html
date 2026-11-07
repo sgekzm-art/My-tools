@@ -1,0 +1,329 @@
+<title>冷蔵庫のプリンと牛乳</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+  /* Layout: one vertical 9:16 "short video" frame, centered, with a slim control bar under it. Deliberately single dark look (video player). */
+  :root {
+    --bg: #0d0c10;
+    --panel: #1b1a22;
+    --fg: #f3f1f6;
+    --muted: #9c98a8;
+    --accent: #e8384f;
+    --display: "Mochiy Pop One", "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
+    --body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  svg#film {
+    height: 100%;
+    max-height: 1920px;
+    aspect-ratio: 9 / 16;
+    max-width: 100%;
+    display: block;
+    border-radius: 14px;
+    background: #000;
+  }
+  .bar {
+    flex: 0 0 auto;
+    width: min(100%, 560px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border-radius: 999px;
+    padding: 6px 14px 6px 6px;
+    box-sizing: border-box;
+  }
+  .bar button {
+    font: 800 14px var(--body);
+    color: var(--fg);
+    background: var(--accent);
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .bar button.ghost { background: transparent; color: var(--muted); padding-inline: 8px; }
+  .bar button:focus-visible, .bar input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .bar input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .bar .time { font: 500 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.2em; text-align: right; }
+  .say { font-family: var(--display); fill: #1f1c26; text-anchor: middle; }
+</style>
+
+<div class="frame">
+<svg id="film" viewBox="0 0 1080 1920" role="img" aria-label="冷蔵庫の中でプリンと牛乳が賞味期限の話をする短いアニメ">
+  <defs>
+    <radialGradient id="beam" cx="1" cy="0.45" r="1">
+      <stop offset="0" stop-color="#fffbe8" stop-opacity="0.95"/>
+      <stop offset="0.6" stop-color="#fff3c8" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#fff3c8" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="sceneClip"><rect x="0" y="0" width="1600" height="900"/></clipPath>
+  </defs>
+
+  <rect width="1080" height="1920" fill="#000"/>
+
+  <!-- title card -->
+  <g id="titleCard">
+    <rect x="150" y="200" width="780" height="340" rx="56" fill="#fff"/>
+    <text x="540" y="300" class="say" font-size="70"><tspan fill="#e8384f">プリン</tspan><tspan>と</tspan><tspan fill="#e8384f">牛乳</tspan></text>
+    <text x="540" y="400" class="say" font-size="66">冷蔵庫でこんな話を</text>
+    <text x="540" y="490" class="say" font-size="66">してたんだ</text>
+  </g>
+
+  <!-- scene: drawn at 1600x900, scaled into the frame -->
+  <g transform="translate(40 660) scale(0.625)" clip-path="url(#sceneClip)">
+    <!-- fridge box -->
+    <rect width="1600" height="900" fill="#75778c"/>
+    <polygon points="0,0 260,70 260,600 0,900" fill="#6d6f84"/>
+    <polygon points="1600,0 1340,70 1340,600 1600,900" fill="#6d6f84"/>
+    <polygon points="0,900 260,600 1340,600 1600,900" fill="#65677b"/>
+    <rect x="260" y="70" width="1080" height="530" fill="#84869b"/>
+    <g stroke="#4d4f62" stroke-width="6" fill="none" stroke-linecap="round">
+      <rect x="260" y="70" width="1080" height="530"/>
+      <line x1="0" y1="0" x2="260" y2="70"/>
+      <line x1="1600" y1="0" x2="1340" y2="70"/>
+      <line x1="0" y1="900" x2="260" y2="600"/>
+      <line x1="1600" y1="900" x2="1340" y2="600"/>
+    </g>
+    <!-- shelf rail on back wall -->
+    <line x1="300" y1="380" x2="1300" y2="380" stroke="#77798e" stroke-width="5"/>
+
+    <!-- characters -->
+    <g id="pudding">
+      <g id="puddingBody">
+        <ellipse cx="0" cy="0" rx="195" ry="30" fill="#e3e7ef" stroke="#3b3346" stroke-width="6"/>
+        <path d="M-145 -8 L-108 -240 Q0 -256 108 -240 L145 -8 Q0 10 -145 -8 Z" fill="#f6d36b" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M-108 -240 Q0 -256 108 -240 L114 -202 Q101 -184 90 -200 Q76 -166 60 -196 Q32 -176 12 -199 Q-16 -168 -40 -197 Q-68 -180 -86 -201 Q-101 -176 -114 -202 Z" fill="#8a4a24" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
+        <ellipse cx="-88" cy="-120" rx="10" ry="34" fill="#fff" opacity="0.55" transform="rotate(10 -88 -120)"/>
+        <g id="puddingFace" transform="translate(0 -110)"></g>
+      </g>
+    </g>
+
+    <g id="milk">
+      <g id="milkBody">
+        <rect x="-66" y="-452" width="132" height="34" rx="6" fill="#f5f6fa" stroke="#3b3346" stroke-width="6"/>
+        <path d="M-112 -340 L-62 -420 L62 -420 L112 -340 Z" fill="#e4e7f0" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="-112" y="-340" width="224" height="340" rx="14" fill="#f5f6fa" stroke="#3b3346" stroke-width="6"/>
+        <rect x="-109" y="-150" width="218" height="104" fill="#5b8fd6"/>
+        <line x1="-109" y1="-150" x2="109" y2="-150" stroke="#3b3346" stroke-width="4"/>
+        <line x1="-109" y1="-46" x2="109" y2="-46" stroke="#3b3346" stroke-width="4"/>
+        <text x="0" y="-80" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="50" fill="#fff" letter-spacing="4">MILK</text>
+        <ellipse cx="72" cy="-305" rx="16" ry="11" fill="#3b3346" opacity="0.8"/>
+        <g id="milkFace" transform="translate(0 -235)"></g>
+      </g>
+    </g>
+
+    <!-- light from the opened door -->
+    <rect id="light" width="1600" height="900" fill="url(#beam)" opacity="0"/>
+    <rect id="dark" width="1600" height="900" fill="#14131c" opacity="0"/>
+
+    <!-- speech -->
+    <text id="pSay" class="say" font-size="80" x="560" y="230"></text>
+    <text id="mSay" class="say" font-size="80" x="1040" y="200"></text>
+    <text id="sfx" class="say" font-size="96" x="1350" y="170" fill="#fff8d8" stroke="#3b3346" stroke-width="5" paint-order="stroke" transform="rotate(-8 1350 170)"></text>
+
+    <!-- hand -->
+    <g id="hand">
+      <rect x="40" y="-48" width="900" height="96" rx="48" fill="#f2c7a5" stroke="#3b3346" stroke-width="6"/>
+      <rect x="40" y="-52" width="70" height="104" rx="14" fill="#dfe4ee" stroke="#3b3346" stroke-width="6"/>
+      <path d="M45 -60 C-10 -80 -70 -60 -78 -10 C-84 40 -40 72 20 64 C50 60 52 30 45 20 Z" fill="#f2c7a5" stroke="#3b3346" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M-40 -38 q-26 6 -34 26 M-44 2 q-24 6 -30 22 M-30 34 q-18 6 -22 18" stroke="#3b3346" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </g>
+
+  </g>
+
+  <!-- ending caption -->
+  <g id="ending" opacity="0">
+    <text x="540" y="1360" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="44" fill="#fff">このあと牛乳は</text>
+    <text x="540" y="1425" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="44" fill="#fff">ホットミルクになりました</text>
+    <text x="540" y="1560" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="56" fill="#e8384f">おわり</text>
+  </g>
+</svg>
+</div>
+
+<div class="bar">
+  <button id="play" type="button">一時停止</button>
+  <input id="seek" type="range" min="0" max="25" step="0.01" value="0" aria-label="再生位置">
+  <span class="time" id="time">0.0 / 25s</span>
+  <button id="replay" type="button" class="ghost">最初から</button>
+</div>
+
+<script>
+(() => {
+  const DUR = 25;
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+  const seg = (t, a, b) => ease(clamp((t - a) / (b - a)));
+  const INK = '#3b3346';
+
+  // Story beats. pt/mt = pudding/milk line ("" clears). pf/mf = faces.
+  // Face: "eyes mouth [extras...]"
+  const beats = [
+    { t: 0,    pt: '',               mt: '',             pf: 'dot smile',            mf: 'dot smile' },
+    { t: 1.0,  pt: 'ねえ',           who: 'p' },
+    { t: 2.4,  mt: 'ん？',           who: 'm', mf: 'dot o' },
+    { t: 3.8,  pt: '賞味期限いつ？', mt: '',  who: 'p', pf: 'dot smile', mf: 'dot smile' },
+    { t: 6.0,  mt: '…それきく？',    who: 'm', mf: 'dot wavy sweat' },
+    { t: 7.8,  pt: '',  mt: 'きのう', who: 'm', mf: 'shut flat sweat' },
+    { t: 9.4,  pt: '……',            who: 'p', pf: 'wide flat sweat' },
+    { t: 11.0, pt: 'わたしあさって', who: 'p', pf: 'happy grin blush', mt: '' , mf: 'dot flat' },
+    { t: 12.6, mt: 'うらやましい',   who: 'm', mf: 'teary wavy' },
+    { t: 14.0, pt: '', mt: '', sfx: 'ガチャ', who: 'both', pf: 'wide o shock', mf: 'wide o shock' },
+    { t: 15.0, sfx: '' },
+    { t: 16.3, mt: 'えっ ぼく？',    who: 'm', mf: 'wide o sweat', pf: 'wide flat' },
+    { t: 18.2, mt: '',  pf: 'dot flat' },
+    { t: 19.2, pt: '……',            who: 'p' },
+    { t: 20.6, pt: 'さみしい',       who: 'p', pf: 'teary wavy' },
+  ];
+  // resolve full state per beat
+  let cur = { pt: '', mt: '', sfx: '', pf: '', mf: '' };
+  const states = beats.map(b => (cur = { ...cur, ...b }));
+  const stateAt = t => {
+    let s = states[0];
+    for (const st of states) if (st.t <= t) s = st; else break;
+    return s;
+  };
+  const lastSpeak = (t, who) => {
+    let bt = -99;
+    for (const b of beats) { if (b.t > t) break; if (b.who === who || b.who === 'both') bt = b.t; }
+    return bt;
+  };
+
+  function faceSVG(spec, wide) {
+    const [eyes, mouth, ...extra] = spec.split(' ');
+    const E = wide ? 46 : 42;
+    let s = '';
+    const eye = sx => {
+      const x = sx * E;
+      switch (eyes) {
+        case 'wide': return `<circle cx="${x}" cy="0" r="17" fill="${INK}"/><circle cx="${x - 5}" cy="-6" r="6" fill="#fff"/>`;
+        case 'shut': return `<path d="M${x - 12 * sx} -9 L${x + 8 * sx} 0 L${x - 12 * sx} 9" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+        case 'happy': return `<path d="M${x - 14} 6 Q${x} -12 ${x + 14} 6" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+        case 'teary': return `<circle cx="${x}" cy="0" r="16" fill="${INK}"/><circle cx="${x - 5}" cy="-6" r="6" fill="#fff"/><circle cx="${x + 5}" cy="5" r="3" fill="#fff"/><path d="M${x} 18 q-6 16 0 28 q6 -12 0 -28" fill="#8fc6f2"/>`;
+        default: return `<circle cx="${x}" cy="0" r="9" fill="${INK}"/>`;
+      }
+    };
+    s += eye(-1) + eye(1);
+    const m = 'stroke="' + INK + '" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+    switch (mouth) {
+      case 'flat': s += `<path d="M-12 30 L12 30" ${m}/>`; break;
+      case 'o': s += `<ellipse cx="0" cy="32" rx="9" ry="12" fill="${INK}"/>`; break;
+      case 'wavy': s += `<path d="M-18 32 q4.5 -7 9 0 t9 0 t9 0 t9 0" ${m}/>`; break;
+      case 'grin': s += `<path d="M-18 24 Q0 50 18 24 Z" fill="${INK}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M-8 38 Q0 44 8 38" fill="#f08a9a"/>`; break;
+      default: s += `<path d="M-12 26 Q0 38 12 26" ${m}/>`;
+    }
+    if (extra.includes('blush')) s += `<ellipse cx="-72" cy="22" rx="20" ry="10" fill="#f39aa8" opacity=".8"/><ellipse cx="72" cy="22" rx="20" ry="10" fill="#f39aa8" opacity=".8"/>`;
+    if (extra.includes('sweat')) s += `<path d="M88 -46 q-14 22 0 30 q14 -8 0 -30 Z" fill="#9fd2f6" stroke="${INK}" stroke-width="4"/>`;
+    if (extra.includes('shock')) s += `<g stroke="${INK}" stroke-width="7" stroke-linecap="round"><line x1="-50" y1="-120" x2="-62" y2="-150"/><line x1="0" y1="-128" x2="0" y2="-162"/><line x1="50" y1="-120" x2="62" y2="-150"/></g>`;
+    return s;
+  }
+
+  const els = {
+    pudding: $('pudding'), puddingBody: $('puddingBody'), pFace: $('puddingFace'),
+    milk: $('milk'), milkBody: $('milkBody'), mFace: $('milkFace'),
+    pSay: $('pSay'), mSay: $('mSay'), sfx: $('sfx'),
+    hand: $('hand'), light: $('light'), dark: $('dark'), ending: $('ending'),
+  };
+  const cache = {};
+  const setFace = (key, el, spec, wide) => { if (cache[key] !== spec) { cache[key] = spec; el.innerHTML = faceSVG(spec, wide); } };
+  const setText = (key, el, txt) => { if (cache[key] !== txt) { cache[key] = txt; el.textContent = txt; } };
+  const pop = (el, x, y, since) => {
+    const k = clamp(since / 0.28);
+    const sc = k >= 1 ? 1 : 0.55 + 0.45 * k + Math.sin(k * Math.PI) * 0.18;
+    el.setAttribute('transform', `translate(${x} ${y}) scale(${sc}) translate(${-x} ${-y})`);
+  };
+
+  const P = { x: 560, y: 760 }, M = { x: 1040, y: 760 };
+
+  function render(t) {
+    const s = stateAt(t);
+    const shock = seg(t, 14.0, 14.12) * (1 - seg(t, 14.25, 14.5));
+
+    // pudding: wobble after speaking, gentle breath otherwise
+    const ps = t - lastSpeak(t, 'p');
+    const wob = ps >= 0 && ps < 2 ? Math.sin(ps * 22) * Math.exp(-ps * 3.5) * 0.07 : 0;
+    const breath = Math.sin(t * 2.2) * 0.012;
+    els.pudding.setAttribute('transform', `translate(${P.x} ${P.y - shock * 40})`);
+    els.puddingBody.setAttribute('transform', `scale(${1 + wob - breath} ${1 - wob + breath})`);
+
+    // milk: little hop when speaking, then lifted out by the hand
+    const ms = t - lastSpeak(t, 'm');
+    const hop = ms >= 0 && ms < 0.4 ? Math.sin(Math.PI * ms / 0.4) * 22 : 0;
+    const grab = seg(t, 16.9, 18.0);
+    const mx = M.x + grab * 900, my = M.y - hop - shock * 40 - grab * 260;
+    const tilt = grab * 14 + Math.sin(t * 1.9 + 1) * 1.2;
+    els.milk.setAttribute('transform', `translate(${mx} ${my}) rotate(${tilt})`);
+
+    // hand reaches in from the right, grabs, pulls out
+    const reach = seg(t, 15.2, 16.1);
+    const hx = 1720 - reach * (1720 - (M.x + 150)) + grab * 900;
+    const hy = M.y - 170 - grab * 260;
+    els.hand.setAttribute('transform', `translate(${hx} ${hy}) rotate(${grab * 14})`);
+    els.hand.style.display = t > 15.1 && t < 18.2 ? '' : 'none';
+
+    // door light
+    const lightOn = seg(t, 13.95, 14.25) * (1 - seg(t, 17.9, 18.25));
+    els.light.setAttribute('opacity', (lightOn * 0.85).toFixed(3));
+    els.dark.setAttribute('opacity', (seg(t, 18.1, 18.4) * 0.28 * (1 - seg(t, 22.5, 24))).toFixed(3));
+
+    // faces & lines
+    setFace('pf', els.pFace, s.pf, false);
+    setFace('mf', els.mFace, s.mf, true);
+    setText('pt', els.pSay, s.pt);
+    setText('mt', els.mSay, s.mt);
+    setText('sfx', els.sfx, s.sfx);
+    pop(els.pSay, P.x, 230, ps);
+    els.mSay.setAttribute('x', mx);
+    pop(els.mSay, mx, 200 + (my - M.y), ms);
+    els.mSay.setAttribute('y', 200 + (my - M.y));
+    pop(els.sfx, 1350, 170, t - 14.0);
+
+    els.ending.setAttribute('opacity', seg(t, 22.2, 23.0).toFixed(3));
+  }
+
+  // playback
+  const seek = $('seek'), playBtn = $('play'), timeEl = $('time');
+  let t = 0, playing = true, last = null;
+  const show = () => { render(t); seek.value = t; timeEl.textContent = `${t.toFixed(1)} / ${DUR}s`; playBtn.textContent = playing ? '一時停止' : (t >= DUR ? 'もう一度' : '再生'); };
+  function frame(now) {
+    if (playing) {
+      if (last != null) t += (now - last) / 1000;
+      if (t >= DUR) { t = DUR; playing = false; }
+      show();
+    }
+    last = now;
+    requestAnimationFrame(frame);
+  }
+  playBtn.addEventListener('click', () => { if (t >= DUR) t = 0; playing = !playing; show(); });
+  $('replay').addEventListener('click', () => { t = 0; playing = true; show(); });
+  seek.addEventListener('input', () => { t = +seek.value; show(); });
+  window.claude?.hot?.snapshot?.(() => ({ t }));
+  const start = d => { t = d?.t ?? 0; show(); requestAnimationFrame(frame); };
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
