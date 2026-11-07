@@ -72,11 +72,14 @@
       <g clip-path="url(#frameClip)">
         <g id="shake">
           <g id="bg"></g>
+          <g id="modeLayer"></g>
           <g id="dogs"></g>
+          <g id="front"></g>
           <g id="prop"></g>
           <g id="bubbles"></g>
         </g>
         <g id="title"></g>
+        <g id="badge"></g>
         <text id="sfx" x="800" y="560" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="130" fill="#ffd23f" stroke="#3a2e28" stroke-width="14" paint-order="stroke" stroke-linejoin="round"></text>
         <rect id="flash" width="1080" height="1920" fill="#fffef2" opacity="0"/>
         <g id="ending" opacity="0"></g>
@@ -117,6 +120,8 @@
         <dt><code>音:</code></dt><dd>効果音。<code>！</code> がつくと全員びっくり（例 <code>音: ガチャ！</code>）</dd>
         <dt><code>退場: / 登場:</code></dt><dd>右へ走って出ていく／戻ってくる</dd>
         <dt><code>寄る:</code></dt><dd>もう一匹のそばへ寄る（例 <code>寄る: ふく</code>）</dd>
+        <dt><code>モード:</code></dt><dd><code>オフ</code>（留守番中の本音・口パク）／<code>オン</code>（ごしゅじんの前）を切り替え</dd>
+        <dt><code>並び:</code></dt><dd>左右の順番（例 <code>並び: ジョン, ふく</code>）</dd>
         <dt><code>小物:</code></dt><dd id="refProps"></dd>
         <dt><code>おわり:</code></dt><dd>最後のテロップ。<code>/</code> で改行</dd>
       </dl>
@@ -286,12 +291,32 @@
   };
   const PH_FX = { 'ラブ': 'hearts', 'てれ': 'blush', 'キラキラ': 'sparkle', 'よだれ': 'sparkle', 'おこ': 'anger', 'ツン': 'anger', 'びっくり': 'shock', 'あせ': 'sweat', 'こわい': 'sweat', 'かなしい': 'gloom', 'なき': 'tears', 'ねむい': 'zzz', 'ドヤ': 'sparkle' };
   const PH_PREFIX = { 'ふく': 'fuku', 'ジョン': 'john' };
+  // オン／オフ episodes: one photo per mode, and a movable jaw for lip-sync on the OFF photos
+  const TALK = { 'ジョン': { off: 'cafe', on: 'happy' }, 'ふく': { off: 'side', on: 'smile' } };
+  const JAW = {
+    'john-cafe': { poly: [[262,366],[300,374],[365,388],[430,374],[462,366],[455,440],[400,485],[330,485],[272,440]], line: [[275,368],[320,378],[365,388],[410,378],[452,368]], drop: 34 },
+    'fuku-side': { poly: [[40,405],[130,415],[240,432],[270,450],[255,495],[150,498],[70,470],[45,440]], line: [[45,408],[130,416],[240,432]], hinge: [245,430], angle: 13 },
+  };
   const PH_FLOOR = 1660;
-  function photoFor(name, face) {
-    const key = `${PH_PREFIX[name]}-${PH_FACE[name][face] || PH_FACE[name]['ふつう']}`;
+  function photoFor(name, face, mode) {
+    const key = mode ? `${PH_PREFIX[name]}-${TALK[name][mode]}` : `${PH_PREFIX[name]}-${PH_FACE[name][face] || PH_FACE[name]['ふつう']}`;
     const [w, h] = PH_SIZE[key];
-    const k = Math.min(600 / h, 500 / w);
-    return { href: `img/${key}.webp`, w: w * k, h: h * k, fx: fxSVG(PH_FX[face], w * k, h * k) };
+    const k = mode ? Math.min(700 / h, 630 / w) : Math.min(600 / h, 500 / w);
+    return { key, href: `img/${key}.webp`, nw: w, nh: h, k, w: w * k, h: h * k, jaw: mode === 'off' ? JAW[key] : null, fx: fxSVG(PH_FX[face], w * k, h * k) };
+  }
+  function photoSVG(ph, id) {
+    if (!ph.jaw) return `<image href="${ph.href}" x="${-ph.w / 2}" y="${-ph.h}" width="${ph.w}" height="${ph.h}"/>`;
+    const pts = ph.jaw.poly.map(p => p.join(',')).join(' ');
+    return `<g transform="scale(${ph.k}) translate(${-ph.nw / 2} ${-ph.nh})">
+      <image href="${ph.href}" width="${ph.nw}" height="${ph.nh}"/>
+      <path class="gap" fill="#3a1d22"/>
+      <defs><clipPath id="jaw-${id}"><polygon points="${pts}"/></clipPath></defs>
+      <g class="jaw"><image href="${ph.href}" width="${ph.nw}" height="${ph.nh}" clip-path="url(#jaw-${id})"/></g></g>`;
+  }
+  function jawPose(jaw, o) {
+    if (jaw.drop) { const d = o * jaw.drop; return { tf: `translate(0 ${d})`, map: ([x, y]) => [x, y + d] }; }
+    const a = -o * jaw.angle, r = a * Math.PI / 180, [px, py] = jaw.hinge;
+    return { tf: `rotate(${a} ${px} ${py})`, map: ([x, y]) => [px + (x - px) * Math.cos(r) - (y - py) * Math.sin(r), py + (x - px) * Math.sin(r) + (y - py) * Math.cos(r)] };
   }
   const star = (x, y, r, c = '#ffd23f') => `<path transform="translate(${x},${y})" d="M0,${-r} Q${r * .18},${-r * .18} ${r},0 Q${r * .18},${r * .18} 0,${r} Q${-r * .18},${r * .18} ${-r},0 Q${-r * .18},${-r * .18} 0,${-r}Z" fill="${c}" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>`;
   function fxSVG(kind, w, h) {
@@ -356,6 +381,7 @@
       <ellipse cx="540" cy="1580" rx="430" ry="104" fill="none" stroke="#c99ab0" stroke-width="6" stroke-dasharray="4 22" stroke-linecap="round"/>`,
   };
   const PROPS = {
+    'オーガニック': `<g transform="translate(545 1700) scale(1.7)"><path d="M-85,0 L-78,-170 L78,-170 L85,0 Z" fill="#d9b48a" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/><path d="M-78,-170 l14,-26 h128 l14,26" fill="#c99f72" stroke="${OUT}" stroke-width="6" stroke-linejoin="round"/><path d="M-12,-128 q-34,-6 -40,-40 q34,2 40,40 z M-12,-128 q30,-14 34,-46 q-30,8 -34,46 z" fill="#7cc46a" stroke="${OUT}" stroke-width="4"/><text x="0" y="-62" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="25" fill="${OUT}">オーガニック</text><text x="0" y="-28" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="500" font-size="18" fill="${OUT}">無添加・低脂肪</text></g>`,
     'おやつ': `<g transform="translate(545 1690) rotate(-8)"><path d="M-70,-14 a22,22 0 1 1 10,-22 h120 a22,22 0 1 1 10,22 a22,22 0 1 1 -10,22 h-120 a22,22 0 1 1 -10,-22Z" fill="#f3d9a4" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/><path d="M-40,-6 h80" stroke="#e1bd7c" stroke-width="6" stroke-linecap="round"/></g>`,
     'ボール': `<g transform="translate(545 1680)"><circle r="56" fill="#ff7a59" stroke="${OUT}" stroke-width="7"/><path d="M-54,-12 Q0,24 54,-12" fill="none" stroke="#fff" stroke-width="10"/></g>`,
     'ごはん': `<g transform="translate(545 1690)"><path d="M-90,-14 Q-90,50 -46,62 L46,62 Q90,50 90,-14Z" fill="#6fb6e8" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/>${[[-44, -22], [-14, -30], [14, -24], [42, -28], [-28, -40], [2, -44], [28, -42]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="14" fill="#b7703d" stroke="${OUT}" stroke-width="4"/>`).join('')}<path d="M-96,-16 Q0,4 96,-16" fill="none" stroke="${OUT}" stroke-width="7" stroke-linecap="round"/></g>`,
@@ -363,46 +389,36 @@
 
   /* ================= episodes ================= */
   const EPISODES = [
-    { name: '第1話 おやつ', text: `タイトル: 第1話 おやつはだれのもの
-背景: リビング
-小物: おやつ
-ジョン: ……おやつ [よだれ]
-ふく: それ わたしの [おこ]
-ジョン: えっ [こわい]
-ジョン: (はんぶんこ…とか…) [あせ]
-ふく: やだ [ツン]
-ジョン: ですよね [なき]
+    { name: 'オンとオフ', text: `タイトル: 留守番中のふたり
+並び: ジョン, ふく
+モード: オフ
+ジョン: なんかさー 最近おやつ変わったよね
+ふく: あー あれね
+ふく: わたしたちの健康のこと考えて
+ふく: オーガニック？ってやつにしたみたいよ
+ジョン: なんかさ 味いまいちじゃね？
+ふく: わかる
+ジョン: ジャンクなの おいしいよねー [キラキラ]
+ふく: それな
 音: ガチャ！
-ふく: おかえり〜！ [ラブ]
-退場: ふく
-表情: ジョン ふつう
-ジョン: …… [キラキラ]
-ジョン: いただきます [にこにこ]
-音: もぐもぐ
+モード: オン
+ふく: ごしゅじんさまー！ [ラブ]
+ジョン: おかえりなさーい！ [ラブ]
+ふく: さみしかったー！ [ラブ]
+小物: オーガニック
+ジョン: わーい おやつだー！ [キラキラ]
+ふく: おいしーい！ [ラブ]
+音: パタン
+モード: オフ
 小物: なし
-登場: ふく
-ふく: わたしのおやつは？ [おこ]
-ジョン: ひぃ [こわい]
-おわり: このあと ふたりとも/ちゃんとおやつをもらいました` },
-    { name: '第2話 かみなり', text: `タイトル: 第2話 かみなりの夜
-背景: 夜のリビング
-音: ゴロゴロ…
-ジョン: こわい… [こわい]
-ふく: ジョンはよわいなぁ [ドヤ]
-ジョン: (だって…) [かなしい]
-ふく: わたしはへいきだもん [ツン]
-音: ドーン！
-寄る: ふく
-ふく: …… [こわい]
-ジョン: ふく？ [びっくり]
-ふく: (ちょっとだけ くっついていい？) [てれ]
-ジョン: …うん [てれ]
-おわり: その夜は/くっついてねました` },
+ジョン: ……やっぱいまいち
+ふく: しっ
+おわり: ※ふたりとも/毎回ちゃんと完食しています` },
   ];
 
   /* ================= parser ================= */
   function parse(src) {
-    const ep = { title: '', bg: 'リビング', events: [], ending: [], errors: [] };
+    const ep = { title: '', bg: 'リビング', events: [], ending: [], errors: [], order: null, hasMode: false };
     const names = Object.keys(DOGS);
     src.split(/\r?\n/).forEach((raw, i) => {
       const line = raw.trim();
@@ -413,6 +429,8 @@
       const key = m[1].trim(), val = m[2].trim();
       if (key === 'タイトル') ep.title = val;
       else if (key === 'キャラ') {}
+      else if (key === 'モード') { const md = /オン|on/i.test(val) ? 'on' : /オフ|off/i.test(val) ? 'off' : null; if (md) { ep.hasMode = true; ep.events.push({ kind: 'mode', mode: md }); } else err('モードは「オン」か「オフ」です'); }
+      else if (key === '並び') { const o = val.split(/[,、，\s]+/).filter(n => DOGS[n]); if (o.length === 2) ep.order = o; else err('並びは「ジョン, ふく」のように二匹とも書いてください'); }
       else if (key === '背景') { if (BGS[val]) ep.bg = val; else err(`背景「${val}」はありません`); }
       else if (key === '音') ep.events.push({ kind: 'sfx', text: val, loud: /[!！]/.test(val) });
       else if (key === '小物') { if (val === 'なし' || PROPS[val]) ep.events.push({ kind: 'prop', prop: val === 'なし' ? null : val }); else err(`小物「${val}」はありません`); }
@@ -437,18 +455,23 @@
     let t = 0.9;
     ep.events.forEach(e => {
       e.t = t;
-      e.d = e.kind === 'say' ? Math.max(1.4, 1.0 + 0.15 * [...e.text].length) : e.kind === 'sfx' ? 1.4 : e.kind === 'move' ? 1.1 : e.kind === 'prop' ? 0.6 : 0.2;
+      e.d = e.kind === 'say' ? Math.max(1.15, 0.75 + 0.12 * [...e.text].length) : e.kind === 'sfx' ? 1.4 : e.kind === 'move' ? 1.1 : e.kind === 'prop' ? 0.6 : e.kind === 'mode' ? (e === ep.events.find(x => x.kind === 'mode') && e.t < 1 ? 0.01 : 0.9) : 0.2;
       t += e.d;
     });
+    let md = null;
+    ep.events.forEach(e => { if (e.kind === 'mode') md = e.mode; e.mode = md; });
+    ep.home = {};
+    const order = ep.order || names;
+    order.forEach((n, i) => { ep.home[n] = ep.hasMode ? [300, 790][i] : (ep.order ? [300, 790][i] : DOGS[n].home); });
     ep.end = t;
     ep.dur = t + (ep.ending.length ? 3.4 : 1);
     // position keyframes per dog
     ep.pos = {};
     for (const n of names) {
-      const ks = [{ t: -1, x: DOGS[n].home }];
+      const ks = [{ t: -1, x: ep.home[n] }];
       ep.events.filter(e => e.kind === 'move' && e.who === n).forEach(e => {
         const other = names.find(o => o !== n);
-        const x = e.how === '退場' ? 1400 : e.how === '登場' ? DOGS[n].home : DOGS[other].home + (DOGS[n].home < DOGS[other].home ? -250 : 250);
+        const x = e.how === '退場' ? 1400 : e.how === '登場' ? ep.home[n] : ep.home[other] + (ep.home[n] < ep.home[other] ? -250 : 250);
         ks.push({ t: e.t, x });
       });
       ep.pos[n] = ks;
@@ -479,17 +502,20 @@
   function build(src) {
     ep = parse(src);
     $('bg').innerHTML = BGS[ep.bg];
+    $('modeLayer').innerHTML = ep.hasMode ? `<rect class="off" width="1080" height="1920" fill="#1b1d3a" opacity="0"/><g class="on" opacity="0"><rect width="1080" height="1920" fill="#ffd6e6" opacity=".35"/>${[[120, 520, 30], [960, 420, 40], [880, 900, 26], [200, 1000, 22], [540, 470, 18], [1000, 1200, 20], [80, 760, 16]].map(([x, y, r]) => star(x, y, r, '#fff6b0')).join('')}${heart(170, 860, 40, '#ff8fb1', -12)}${heart(930, 700, 46, '#ff5c8a', 14)}</g>` : '';
+    $('front').innerHTML = ep.hasMode && style === 'photo' ? `<rect x="-20" y="1462" width="1120" height="480" fill="#c98f5a"/><rect x="-20" y="1450" width="1120" height="26" rx="10" fill="#e2ac74"/><g stroke="#b77d4b" stroke-width="5" opacity=".7">${[1560, 1680, 1820].map((y, i) => `<path d="M${-20 + i * 90} ${y} q300 ${-10 + i * 8} 640 0 t640 ${i * 4}"/>`).join('')}</g>` : '';
+    $('badge').innerHTML = ''; delete $('badge').dataset.k;
     $('title').innerHTML = titleSVG(ep.title);
     $('dogs').innerHTML = ''; $('bubbles').innerHTML = ''; $('prop').innerHTML = '';
     dogs = {};
     for (const [name, d] of Object.entries(DOGS)) {
       const g = document.createElementNS(NS, 'g');
-      g.innerHTML = style === 'photo' ? `<g class="photo"><image class="ph" preserveAspectRatio="xMidYMax meet"/><g class="fx"></g></g>`
+      g.innerHTML = style === 'photo' ? `<g class="photo"><g class="pimg"></g><g class="fx"></g></g>`
         : `<g class="tail">${d.tail}</g><g class="body">${d.body}</g><g class="head"></g>`;
       $('dogs').appendChild(g);
       const b = document.createElementNS(NS, 'g');
       $('bubbles').appendChild(b);
-      dogs[name] = { name, d, g, tail: g.querySelector('.tail'), body: g.querySelector('.body'), head: g.querySelector('.head'), photo: g.querySelector('.photo'), img: g.querySelector('.ph'), fx: g.querySelector('.fx'), bub: b, faceKey: '', bubKey: null, faceT: -9, ph: null };
+      dogs[name] = { name, d, g, tail: g.querySelector('.tail'), body: g.querySelector('.body'), head: g.querySelector('.head'), photo: g.querySelector('.photo'), pimg: g.querySelector('.pimg'), fx: g.querySelector('.fx'), bub: b, faceKey: '', bubKey: null, faceT: -9, ph: null };
     }
     $('ending').innerHTML = ep.ending.length ? `<rect width="1080" height="1920" fill="#14161d" opacity=".55"/>
       <g transform="rotate(-2 540 960)"><rect x="110" y="${760 - ep.ending.length * 40}" width="860" height="${260 + ep.ending.length * 80}" rx="48" fill="#fff" stroke="${OUT}" stroke-width="8"/>
@@ -553,6 +579,26 @@
     const ps = clamp((t - propT) / 0.3);
     $('prop').setAttribute('transform', `translate(545 1690) scale(${prop ? (ps < 1 ? 0.4 + 0.6 * ps + Math.sin(ps * Math.PI) * 0.2 : 1) : 1}) translate(-545 -1690)`);
 
+    let mode = null, modeT = -9;
+    const firstMode = ev.find(e => e.kind === 'mode');
+    for (let i = 0; i <= idx; i++) if (ev[i].kind === 'mode') { mode = ev[i].mode; modeT = ev[i] === firstMode ? -9 : ev[i].t; }
+    if (ep.hasMode && !mode) mode = (ev.find(e => e.kind === 'mode') || {}).mode || 'off';
+    if (ep.hasMode) {
+      const ml = $('modeLayer'), sw = clamp((t - modeT) / 0.5);
+      const onAmt = mode === 'on' ? sw : 1 - sw;
+      ml.querySelector('.off').setAttribute('opacity', ((1 - onAmt) * 0.3).toFixed(3));
+      ml.querySelector('.on').setAttribute('opacity', onAmt.toFixed(3));
+      const bk = mode + '|' + (sw < 1 ? Math.round(sw * 20) : 'x');
+      if ($('badge').dataset.k !== bk) {
+        $('badge').dataset.k = bk;
+        const kx = 830 + (onAmt) * 110, col = mode === 'on' ? '#ff6f9c' : '#5b6178';
+        const pop = sw < 1 ? 1 + Math.sin(sw * Math.PI) * 0.25 : 1;
+        $('badge').innerHTML = `<g transform="translate(900 150) scale(${pop}) translate(-900 -150)"><rect x="770" y="100" width="260" height="100" rx="50" fill="${col}" stroke="${OUT}" stroke-width="7"/>
+          <text x="${mode === 'on' ? 830 : 970}" y="168" text-anchor="middle" font-family="Mochiy Pop One, sans-serif" font-size="44" fill="#fff">${mode === 'on' ? 'ON' : 'OFF'}</text>
+          <circle cx="${kx}" cy="150" r="38" fill="#fff" stroke="${OUT}" stroke-width="6"/></g>`;
+      }
+    }
+
     const order = Object.values(dogs);
     order.forEach(dg => {
       let face = 'ふつう', lastSay = null, lastSayIdx = -1;
@@ -563,14 +609,17 @@
         if (e.kind === 'face') face = e.face;
       }
       const f = loud ? FACES['びっくり'] : FACES[face];
-      const key = loud ? 'loud' : face;
+      const key = (loud ? 'loud' : face) + '|' + (style === 'photo' ? mode : '');
       if (dg.faceKey !== key) {
         dg.faceKey = key; dg.faceT = t;
         if (style === 'photo') {
-          dg.ph = photoFor(dg.name, loud ? 'びっくり' : face);
-          dg.img.setAttribute('href', dg.ph.href);
-          dg.img.setAttribute('x', -dg.ph.w / 2); dg.img.setAttribute('y', -dg.ph.h);
-          dg.img.setAttribute('width', dg.ph.w); dg.img.setAttribute('height', dg.ph.h);
+          const nk = photoFor(dg.name, loud ? 'びっくり' : face, mode);
+          if (!dg.ph || dg.ph.key !== nk.key) {
+            // new photo: rebuild (and let it pop in)
+            dg.pimg.innerHTML = photoSVG(nk, PH_PREFIX[dg.name]);
+            dg.jawEl = dg.pimg.querySelector('.jaw'); dg.gapEl = dg.pimg.querySelector('.gap');
+          } else dg.faceT = -9; // same photo, only the effect changes: no pop
+          dg.ph = nk;
           dg.fx.innerHTML = dg.ph.fx;
         } else dg.head.innerHTML = dg.d.head(f);
       }
@@ -581,14 +630,24 @@
       const jump = loud && sfxSince < 0.5 ? Math.sin(Math.PI * clamp(sfxSince / 0.3)) * 60 : 0;
       const run = p.moving ? Math.abs(Math.sin(p.since * 12)) * 40 : 0;
       const tremble = f.tremble ? Math.sin(t * 70) * 5 : 0;
-      const x = p.x + tremble, y = (style === 'photo' ? PH_FLOOR : BASE_Y) - hop - jump - run;
+      const onHop = ep.hasMode && mode === 'on' ? Math.abs(Math.sin(t * 7 + p.x)) * 18 : 0;
+      const x = p.x + tremble, y = (style === 'photo' ? (ep.hasMode ? 1490 : PH_FLOOR) : BASE_Y) - hop - jump - run - onHop;
       const breath = Math.sin(t * 2.4 + p.x) * 0.015;
       if (style === 'photo') {
         const fk = clamp((t - dg.faceT) / 0.25);
         const pop = fk < 1 ? 0.92 + 0.08 * fk + Math.sin(fk * Math.PI) * 0.06 : 1;
         const wobP = since < 1.6 ? Math.sin(since * 16) * Math.exp(-since * 3.2) * 3 : 0;
         dg.g.setAttribute('transform', `translate(${x} ${y})`);
-        dg.photo.setAttribute('transform', `rotate(${wobP}) scale(${pop * (1 + breath)} ${pop * (1 - breath)})`);
+        dg.photo.setAttribute('transform', `rotate(${dg.jawEl ? wobP * 0.3 : wobP}) scale(${pop * (1 + breath)} ${pop * (1 - breath)})`);
+        if (dg.jawEl) {
+          const talkLen = lastSay ? Math.min(lastSay.d - 0.3, 0.13 * [...lastSay.text].length + 0.25) : 0;
+          let o = 0;
+          if (since < talkLen) o = Math.pow(Math.abs(Math.sin(since * Math.PI * 6.5)), 0.8) * (0.55 + 0.45 * Math.abs(Math.sin(since * 2.3 + 1)));
+          const pose = jawPose(dg.ph.jaw, o);
+          dg.jawEl.setAttribute('transform', pose.tf);
+          const L = dg.ph.jaw.line;
+          dg.gapEl.setAttribute('d', o > 0.02 ? 'M' + L.map(p => p.join(',')).join(' L') + ' L' + L.slice().reverse().map(p => pose.map(p).map(v => v.toFixed(1)).join(',')).join(' L') + 'Z' : '');
+        }
       } else {
       dg.g.setAttribute('transform', `translate(${x} ${y}) scale(${SCALE})`);
       dg.body.setAttribute('transform', `translate(0 300) scale(${1 + breath} ${1 - breath}) translate(0 -300)`);
@@ -600,7 +659,7 @@
 
       // bubble: current or previous cut, hidden while off screen
       const show = lastSay && lastSayIdx >= idx - 1 && p.x < 1100 ? lastSay : null;
-      const headTop = style === 'photo' ? Math.max(860, PH_FLOOR - (dg.ph ? dg.ph.h : 500) + 30) : BASE_Y - dg.d.top * SCALE;
+      const headTop = style === 'photo' ? Math.max(860, (ep.hasMode ? 1490 : PH_FLOOR) - (dg.ph ? dg.ph.h : 500) + 30) : BASE_Y - dg.d.top * SCALE;
       const bk = show ? show.t + '|' + Math.round(p.x) + '|' + Math.round(headTop) : '';
       if (dg.bubKey !== bk) {
         dg.bubKey = bk;
@@ -668,7 +727,9 @@
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(e.text.replace(/…+/g, '、'));
       u.lang = 'ja-JP'; if (jaVoice) u.voice = jaVoice;
-      u.pitch = fuku ? 1.8 : 1.05; u.rate = fuku ? 1.15 : 0.88; u.volume = e.small ? 0.45 : fuku ? 1 : 0.8;
+      const off = e.mode === 'off', on = e.mode === 'on';
+      u.pitch = off ? (fuku ? 0.95 : 0.7) : on ? (fuku ? 2 : 1.6) : (fuku ? 1.8 : 1.05);
+      u.rate = off ? (fuku ? 1.05 : 0.95) : on ? 1.2 : (fuku ? 1.15 : 0.88); u.volume = e.small ? 0.45 : fuku ? 1 : 0.8;
       speechSynthesis.speak(u);
     } else if (actx) {
       // "わんわん語": one blip per character
