@@ -15,7 +15,7 @@
 - `line-stamp-analysis/` … 人気LINEスタンプの傾向と、次に作るスタンプの企画（2026年11月）
 
 ## ふくちゃんの本音・あるある（fuku-honne-40/）
-- 40個＋main/tab＋提出用ZIP（fuku-honne-40-line-stamps.zip）。写真はGemini、`src/build.py` で文字入れ（文字はChatGPTの手書き文字を切り出し。15・38・40 は Yusei Magic）
+- 40個＋main/tab＋提出用ZIP（fuku-honne-40-line-stamps.zip）。写真はGemini、`src/build.py` で文字入れ（文字はChatGPTの手書き文字を切り出し。15 のみ Yusei Magic）
 
 ## 福 LINEスタンプ
 - `fuku-stamps/` … 写真版（16個＋main/tab、提出用ZIP）

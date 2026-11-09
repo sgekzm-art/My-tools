@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 S=os.path.dirname(os.path.abspath(__file__)); OUT=sys.argv[1]; os.makedirs(OUT,exist_ok=True)
 FONT=f'{S}/YuseiMagic-Regular.ttf'; EMO='/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf'
-USE_GPT=os.environ.get('GPT','1')=='1'; GPT_SKIP={15,38,40}
+USE_GPT=os.environ.get('GPT','1')=='1'; GPT_SKIP={15}
 K=2; W,H=370*K,320*K; M=10*K
 C=dict(orange=(242,128,20),blue=(40,90,210),red=(228,48,72),green=(24,150,100),purple=(130,74,210),
        pink=(238,72,130),teal=(10,150,160),brown=(190,90,40),navy=(50,60,150))
@@ -163,7 +163,7 @@ def make(i,lines,honne,col,pos,tilt,emo):
         return o.resize((370,320),Image.LANCZOS)
     tb=fit(tb,W-2*M,(H-2*M)*0.55,1.0)
     th=tb.height
-    overlap=int(th*{16:0.15,18:0.05,10:0.3}.get(i,0.40 if i<=20 else 0.30))
+    overlap=int(th*{16:0.15,18:0.05,10:0.3,40:0.6}.get(i,0.40 if i<=20 else 0.30))
     area_h=H-2*M-th+overlap
     d=fit(dog,W-2*M,area_h)
     canvas=Image.new('RGBA',(W,H),(0,0,0,0))
