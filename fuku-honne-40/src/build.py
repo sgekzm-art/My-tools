@@ -2,7 +2,7 @@ import sys, os, zipfile, math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 S=os.path.dirname(os.path.abspath(__file__)); OUT=sys.argv[1]; os.makedirs(OUT,exist_ok=True)
-FONT=f'{S}/Mochiy.ttf'; EMO='/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf'
+FONT=f'{S}/YuseiMagic-Regular.ttf'; EMO='/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf'
 K=2; W,H=370*K,320*K; M=10*K
 C=dict(orange=(242,128,20),blue=(40,90,210),red=(228,48,72),green=(24,150,100),purple=(130,74,210),
        pink=(238,72,130),teal=(10,150,160),brown=(190,90,40),navy=(50,60,150))
@@ -97,14 +97,29 @@ def text_block(lines, honne, col):
         s=72
         while f(s).getlength(honne)>maxw: s-=2
         imgs.append((honne,f(s),(70,70,80)))
+    import random
     rend=[]
-    for t,ft,c in imgs:
-        bb=ft.getbbox(t); w,h=bb[2]-bb[0]+40,bb[3]-bb[1]+40
-        im=Image.new('RGBA',(w,h),(0,0,0,0)); d=ImageDraw.Draw(im)
-        sw=max(8,int(ft.size*0.13))
-        d.text((20-bb[0],20-bb[1]),t,font=ft,fill=(255,255,255,255),stroke_width=sw,stroke_fill=(255,255,255,255))
-        d.text((20-bb[0],20-bb[1]),t,font=ft,fill=c+(255,))
-        rend.append(im)
+    for li,(t,ft,c) in enumerate(imgs):
+        rnd=random.Random(hash(t)%9973)
+        sw=max(8,int(ft.size*0.14)); bold=max(1,int(ft.size*0.025))
+        chars=[]
+        bold=max(1,int(ft.size*0.012))
+        for ch in t:
+            adv=ft.getlength(ch)
+            cw,chh=int(adv)+2*sw+20,int(ft.size*1.4)+2*sw
+            o=(sw+10,sw); ang=rnd.uniform(-6,6); dy=int(rnd.uniform(-0.05,0.05)*ft.size)
+            wl=Image.new('RGBA',(cw,chh),(0,0,0,0)); ImageDraw.Draw(wl).text(o,ch,font=ft,fill=(255,255,255,255),stroke_width=sw+bold,stroke_fill=(255,255,255,255))
+            cl=Image.new('RGBA',(cw,chh),(0,0,0,0)); ImageDraw.Draw(cl).text(o,ch,font=ft,fill=c+(255,),stroke_width=bold,stroke_fill=c+(255,))
+            wl=wl.rotate(ang,resample=Image.BICUBIC,center=(cw/2,chh/2)); cl=cl.rotate(ang,resample=Image.BICUBIC,center=(cw/2,chh/2))
+            chars.append((wl,cl,adv,dy))
+        tot=int(sum(x[2] for x in chars)*0.97)+chars[0][0].width
+        hh=max(x[0].height for x in chars)+int(ft.size*0.12)
+        line=Image.new('RGBA',(tot,hh),(0,0,0,0))
+        for layer in (0,1):
+            x=0
+            for ch in chars:
+                line.alpha_composite(ch[layer],(int(x),max(0,ch[3]+int(ft.size*0.06)))); x+=ch[2]*0.97
+        line=line.crop(line.getbbox()); rend.append(line)
     tw=max(r.width for r in rend); th=sum(r.height for r in rend)-28*(len(rend)-1)
     blk=Image.new('RGBA',(tw,th),(0,0,0,0)); y=0
     for k,r in enumerate(rend):
@@ -132,7 +147,7 @@ def make(i,lines,honne,col,pos,tilt,emo):
         if i in (21,36):
             t=fit(tb,max(W-2*M-d.width+30,(W-2*M)*0.45),(H-2*M)*0.8,1.0); canvas.alpha_composite(t,(M,(H-t.height)//2+10))
         else:
-            t=fit(tb,(W-2*M)*0.66,(H-2*M)*0.62,1.0); canvas.alpha_composite(t,(M,H-M-t.height-8))
+            t=fit(tb,(W-2*M)*0.66,(H-2*M)*0.75,1.0); canvas.alpha_composite(t,(M,H-M-t.height-8))
         c=canvas.crop(canvas.getbbox()); c=fit(c,W-2*M,H-2*M,1.0)
         o=Image.new('RGBA',(W,H),(0,0,0,0)); o.alpha_composite(c,((W-c.width)//2,(H-c.height)//2))
         return o.resize((370,320),Image.LANCZOS)
