@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 S=os.path.dirname(os.path.abspath(__file__)); OUT=sys.argv[1]; os.makedirs(OUT,exist_ok=True)
 FONT=f'{S}/YuseiMagic-Regular.ttf'; EMO='/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf'
+USE_GPT=os.environ.get('GPT','1')=='1'; GPT_SKIP={15,38,40}
 K=2; W,H=370*K,320*K; M=10*K
 C=dict(orange=(242,128,20),blue=(40,90,210),red=(228,48,72),green=(24,150,100),purple=(130,74,210),
        pink=(238,72,130),teal=(10,150,160),brown=(190,90,40),navy=(50,60,150))
@@ -138,7 +139,16 @@ def fit(L,bw,bh,maxs=10):
 def make(i,lines,honne,col,pos,tilt,emo):
     dog=outline(padimg(dog_layer(i),30),18)
     dog=dog.crop(dog.getbbox())
-    tb=text_block(lines,honne,C[col]).rotate(tilt,expand=True,resample=Image.BICUBIC)
+    GPTI=False
+    gp=f'{S}/gpt/txt/t{i:02d}.png'
+    if USE_GPT and os.path.exists(gp) and i not in GPT_SKIP:
+        g=Image.open(gp).convert('RGBA'); g=g.resize((g.width*3,g.height*3),Image.LANCZOS)
+        tb=outline(padimg(g,24),14)
+        tb=tb.crop(tb.getbbox())
+        emo=None; GPTI=True
+        if i not in (4,): pos='left' if tb.height/tb.width>0.62 else 'top'
+    else:
+        tb=text_block(lines,honne,C[col]).rotate(tilt,expand=True,resample=Image.BICUBIC)
     if pos=='left':
         canvas=Image.new('RGBA',(W,H),(0,0,0,0))
         d=fit(dog,(W-2*M)*0.54,(H-2*M)*0.96); canvas.alpha_composite(d,(W-M-d.width,(H-d.height)//2))
@@ -147,7 +157,7 @@ def make(i,lines,honne,col,pos,tilt,emo):
         if i in (21,36):
             t=fit(tb,max(W-2*M-d.width+30,(W-2*M)*0.45),(H-2*M)*0.8,1.0); canvas.alpha_composite(t,(M,(H-t.height)//2+10))
         else:
-            t=fit(tb,(W-2*M)*0.66,(H-2*M)*0.75,1.0); canvas.alpha_composite(t,(M,H-M-t.height-8))
+            t=fit(tb,(W-2*M)*0.66,(H-2*M)*0.75,1.0); canvas.alpha_composite(t,(M,(H-t.height)//2 if GPTI else H-M-t.height-8))
         c=canvas.crop(canvas.getbbox()); c=fit(c,W-2*M,H-2*M,1.0)
         o=Image.new('RGBA',(W,H),(0,0,0,0)); o.alpha_composite(c,((W-c.width)//2,(H-c.height)//2))
         return o.resize((370,320),Image.LANCZOS)
