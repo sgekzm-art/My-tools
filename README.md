@@ -17,6 +17,9 @@
 ## ふくちゃんの本音・あるある（fuku-honne-40/）
 - 40個＋main/tab＋提出用ZIP（fuku-honne-40-line-stamps.zip）。写真はGemini、`src/build.py` で文字入れ（文字はChatGPTの手書き文字を切り出し。15 のみ Yusei Magic）
 
+## ジョンの本音・あるある（john-honne-40/）
+- 40個＋main/tab＋提出用ZIP。写真はGemini、文字はふくちゃん版と同じChatGPTの手書き文字（15 のみ Yusei Magic）
+
 ## 福 LINEスタンプ
 - `fuku-stamps/` … 写真版（16個＋main/tab、提出用ZIP）
 - `fuku-illust/` … イラスト版（16個＋main/tab、提出用ZIP）
