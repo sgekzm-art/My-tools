@@ -28,6 +28,26 @@ D=[
 (18,['がんばった','えらい'],None,'pink','left',4,'✨'),
 (19,['ふとんから','出られない'],None,'brown','top',-3,None),
 (20,['5分だけ…'],None,'blue','top',3,'💤'),
+(21,['休日は','動かない'],None,'green','left',-4,None),
+(22,['寒いのむり'],None,'blue','top',3,'⛄'),
+(23,['今それどころ','じゃない'],None,'red','top',-3,None),
+(24,['充電中'],None,'green','top',-4,'🔋'),
+(25,['一口','ちょうだい'],'（全部）','orange','left',3,'✨'),
+(26,['ダイエットは','明日から'],None,'pink','top',-3,None),
+(27,['それおいしい','やつ？'],None,'brown','top',4,None),
+(28,['別腹','です'],None,'purple','left',-4,None),
+(29,['食べて','ない'],'（食べた）','teal','left',3,None),
+(30,['かまって'],'（でも触らないで）','pink','top',-3,None),
+(31,['べつに怒って','ないけど？'],None,'red','top',3,'💢'),
+(32,['聞いてないフリ'],None,'navy','top',-3,None),
+(33,['察して'],None,'purple','top',4,None),
+(34,['今の聞かなかった','ことに'],None,'teal','top',-3,None),
+(35,['ほめて！'],None,'orange','top',-4,'💕'),
+(36,['うらや','ましい'],None,'green','left',-4,None),
+(37,['気まずい'],None,'blue','left',3,'💦'),
+(38,['言い訳','させて'],None,'brown','left',-4,None),
+(39,['本音です'],None,'red','top',-3,None),
+(40,['ここだけ','の話'],None,'purple','left',3,'🤫'),
 ]
 def outline(L, r, col=(255,255,255), shadow=True):
     a=np.array(L.getchannel('A'))
@@ -47,9 +67,16 @@ def rounded_photo(cell):
     rows=np.where((a<238).mean(1)>0.6)[0]; cols=np.where((a<238).mean(0)>0.6)[0]
     box=(cols[0]+6,rows[0]+6,cols[-1]-5,rows[-1]-5); ph=cell.crop(box).convert('RGBA')
     m=Image.new('L',ph.size,0); ImageDraw.Draw(m).rounded_rectangle((0,0,ph.width-1,ph.height-1),radius=28,fill=255); ph.putalpha(m); return ph
+def shape_photo(cell):
+    from scipy import ndimage
+    a=np.array(cell.convert('L'))<236
+    a=ndimage.binary_closing(a,iterations=3); a=ndimage.binary_fill_holes(a); a=ndimage.binary_erosion(a,iterations=10)
+    lab,n=ndimage.label(a); k=np.argmax(np.bincount(lab.ravel())[1:])+1; a=lab==k
+    L=cell.convert('RGBA'); L.putalpha(Image.fromarray((a*255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1))); return L
 def dog_layer(i):
-    if i==4: L=rounded_photo(Image.open(f'{S}/cells/c04.png').convert('RGB'))
-    elif i in (13,14): L=Image.open(f'{S}/cells/u2{i:02d}.png').convert('RGBA')
+    if i in (4,36): L=rounded_photo(Image.open(f'{S}/cells/c{i:02d}.png').convert('RGB'))
+    elif i==21: L=shape_photo(Image.open(f'{S}/cells/c21.png').convert('RGB'))
+    elif i in (13,14) or i>20: L=Image.open(f'{S}/cells/u2{i:02d}.png').convert('RGBA')
     else: L=Image.open(f'{S}/cells/cut{i:02d}.png').convert('RGBA')
     a=np.array(L.getchannel('A')); a[a<40]=0; L.putalpha(Image.fromarray(a))
     L=L.crop(L.getbbox()); return L
@@ -99,16 +126,19 @@ def make(i,lines,honne,col,pos,tilt,emo):
     tb=text_block(lines,honne,C[col]).rotate(tilt,expand=True,resample=Image.BICUBIC)
     if pos=='left':
         canvas=Image.new('RGBA',(W,H),(0,0,0,0))
-        d=fit(dog,(W-2*M)*0.62,H-2*M); canvas.alpha_composite(d,(W-M-d.width,(H-d.height)//2))
+        d=fit(dog,(W-2*M)*0.54,(H-2*M)*0.96); canvas.alpha_composite(d,(W-M-d.width,(H-d.height)//2))
         if emo:
-            e=emoji(emo,70); canvas.alpha_composite(e,(W-M-d.width-20,H-M-e.height-40))
-        t=fit(tb,(W-2*M)*0.74,(H-2*M)*0.8,1.0); canvas.alpha_composite(t,(M,(H-t.height)//2+10))
+            e=emoji(emo,70); canvas.alpha_composite(e,(max(M,W-M-d.width-e.width//2-10),M+30))
+        if i in (21,36):
+            t=fit(tb,max(W-2*M-d.width+30,(W-2*M)*0.45),(H-2*M)*0.8,1.0); canvas.alpha_composite(t,(M,(H-t.height)//2+10))
+        else:
+            t=fit(tb,(W-2*M)*0.66,(H-2*M)*0.62,1.0); canvas.alpha_composite(t,(M,H-M-t.height-8))
         c=canvas.crop(canvas.getbbox()); c=fit(c,W-2*M,H-2*M,1.0)
         o=Image.new('RGBA',(W,H),(0,0,0,0)); o.alpha_composite(c,((W-c.width)//2,(H-c.height)//2))
         return o.resize((370,320),Image.LANCZOS)
     tb=fit(tb,W-2*M,(H-2*M)*0.55,1.0)
     th=tb.height
-    overlap=int(th*{16:0.15,18:0.05,10:0.3}.get(i,0.40))
+    overlap=int(th*{16:0.15,18:0.05,10:0.3}.get(i,0.40 if i<=20 else 0.30))
     area_h=H-2*M-th+overlap
     d=fit(dog,W-2*M,area_h)
     canvas=Image.new('RGBA',(W,H),(0,0,0,0))
@@ -138,6 +168,10 @@ def sq(im,w,h,mg):
 sq(m,240,240,10).save(f'{OUT}/main.png',optimize=True)
 t=outline(padimg(rounded_photo(Image.open(f'{S}/cells/c04.png').convert('RGB')),20),14); t=t.crop(t.getbbox())
 sq(t,96,74,2).save(f'{OUT}/tab.png',optimize=True)
+zp=f'{OUT}/fuku-honne-40-line-stamps.zip'
+with zipfile.ZipFile(zp,'w',zipfile.ZIP_DEFLATED) as z:
+    for k in range(len(D)): z.write(f'{OUT}/{k+1:02d}.png',f'{k+1:02d}.png')
+    z.write(f'{OUT}/main.png','main.png'); z.write(f'{OUT}/tab.png','tab.png')
 cols=5; n=len(D); rows=(n+cols-1)//cols
 sheet=Image.new('RGB',(cols*390+20,rows*340+20),(140,171,216))
 for k in range(n):
