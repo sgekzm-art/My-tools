@@ -14,6 +14,9 @@
 ## 売れ筋分析
 - `line-stamp-analysis/` … 人気LINEスタンプの傾向と、次に作るスタンプの企画（2026年11月）
 
+## ふくちゃんの本音・あるある（fuku-honne-40/）
+- 01〜20 完成（Gemini写真＋文字入れ）。21〜40 は写真待ち。40個そろったら提出用ZIPを作成
+
 ## 福 LINEスタンプ
 - `fuku-stamps/` … 写真版（16個＋main/tab、提出用ZIP）
 - `fuku-illust/` … イラスト版（16個＋main/tab、提出用ZIP）
